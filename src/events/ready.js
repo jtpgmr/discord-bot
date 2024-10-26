@@ -1,8 +1,4 @@
-
-import {    
-    DISCORD_GUILD_ID,
-    DISCORD_USER_ACTIVITY_CHANNEL 
-} from '../../config/index.js'
+const { DISCORD_GUILD_ID, DISCORD_USER_ACTIVITY_CHANNEL } = require('../../config')
 
 const ready = ({ client }) => {
     const botName = client.user.tag
@@ -11,7 +7,7 @@ const ready = ({ client }) => {
     
     const appGuildId = client.guilds.cache.get(DISCORD_GUILD_ID).id;
     
-    if (!appGuildId) throw new Error(`Bot ${botName} is not a part of any guilds.`)
+    if (!appGuildId) throw new Error(`Bot ${botName} is not a part of guild.`)
     
     for (const channel of client.channels.cache) {
         const { guildId, members, name } = channel[1]
@@ -23,11 +19,18 @@ const ready = ({ client }) => {
         }
     }
 
-    const readyMessage = `Bot "${botName}" is now active and listening...`
-    
-    // prop which caches the activity channel, for use in other event handlers
-    client.activityChannel = client.channels.cache.get(DISCORD_USER_ACTIVITY_CHANNEL);
-    client.activityChannel.send(readyMessage)
+    const activityChannel = client.channels.cache.get(DISCORD_USER_ACTIVITY_CHANNEL);
+
+    if (activityChannel) {
+        // property which caches the activity channel, for use in other event handlers
+        client.activityChannel = activityChannel;  
+        
+        const readyMessage = `Bot "${botName}" is now active and listening...`
+        
+        client.activityChannel.send(readyMessage);
+    } else {
+        console.error('Activity channel not found. Please check the channel ID.');
+    }
 };
 
-export default ready;
+module.exports = ready;

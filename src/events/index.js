@@ -1,24 +1,26 @@
-import ready from './ready.js';
-import presenceUpdate from './presenceUpdate.js';
+const interactionCreate = require('./interactionCreate');
+const ready = require('./ready');
+const presenceUpdate = require('./presenceUpdate');
+const { Events } = require('discord.js');
 
-export const eventHandlers = {
+const eventHandlers = {
     /*
         - event emitter for startup event
         - should only occur once
     */
     once: {
         // triggers upon initialization of bot
-        'ready': ready,    
+        [Events.ClientReady]: ready,    
     },
     on: {
         // triggers whenever a member status changes
-        'presenceUpdate': presenceUpdate,
-        // 'send-..': '...'
+        [Events.PresenceUpdate]: presenceUpdate,
+        [Events.InteractionCreate]:  interactionCreate,
     }
 };
 
 
-const handleEvents = ({ client, eventHandlers }) => {
+const setupEventHandlers = ({ client, eventHandlers }) => {
     const { once } = eventHandlers
     
     // sorts listeners so that 'once' listener events (used for setup) occur first
@@ -32,10 +34,14 @@ const handleEvents = ({ client, eventHandlers }) => {
         }
         
         for (const [eventName, handler] of Object.entries(sortedHandlers[listenerType])) {
+            // check how spreading args impacts code
             client[listenerType](eventName, (...args) => handler({ client, ...args}))
         }
     }
 } 
 
 
-export default handleEvents;
+module.exports = {
+    default: setupEventHandlers,
+    eventHandlers
+};
