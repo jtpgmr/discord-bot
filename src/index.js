@@ -1,44 +1,31 @@
-const { Client, Collection, GatewayIntentBits, REST, Routes } = require('discord.js');
+const { Client, Collection, GatewayIntentBits } = require('discord.js');
 
-const { DISCORD_BOT_TOKEN, DISCORD_GUILD_ID, DISCORD_BOT_CLIENT_ID } = require('../config')
-const {default: setupEventHandlers, eventHandlers } = require('./events')
-const { default: setupCommandHandlers, commandHandlers } = require('./commands')
+const { setupEventHandlers, eventHandlers } = require('./events')
+const { setupCommandHandlers, commandHandlers } = require('./commands')
+
+const { helpers: { createDbConn } } = require('./utils')
+const { 
+    databaseCredentials, 
+    discordCredentials: { DISCORD_BOT_TOKEN }
+} = require('./config')
 
 const client = new Client({
     intents: [
-        GatewayIntentBits.Guilds,
-        GatewayIntentBits.GuildPresences,
+        GatewayIntentBits.Guilds, // View Channels and Messages
+        GatewayIntentBits.GuildPresences, // View Member Statuses
+        GatewayIntentBits.GuildMembers // Add Members
     ]
 });
 
-client.commands = new Collection();
+(async () => { 
+    // initialize bot
+    client.login(DISCORD_BOT_TOKEN)
 
-setupCommandHandlers({ client, commandHandlers });
+    // setup custom slash commands
+    client.commands = new Collection();
+    setupCommandHandlers({ client, commandHandlers });
 
-// Create REST instance for slash command registration
-const rest = new REST({ version: '10' }).setToken(DISCORD_BOT_TOKEN);
+    // set webhook event handlers
+    setupEventHandlers({ client, eventHandlers })
 
-(async () => {
-    try {
-        console.log('Started refreshing application (/) commands.');
-        const commandRegisterDetails = []
-        for (const [, cmdData] of client.commands) {
-            const { name, description } = cmdData.data
-            commandRegisterDetails.push({ name, description })
-        }
-        
-
-        await rest.put(
-            Routes.applicationGuildCommands(DISCORD_BOT_CLIENT_ID, DISCORD_GUILD_ID),
-            { body: commandRegisterDetails },
-        );
-
-        console.log('Successfully reloaded application (/) commands.');
-    } catch (error) {
-        console.error(error);
-    }
-})();
-
-setupEventHandlers({ client, eventHandlers })
-
-client.login(DISCORD_BOT_TOKEN)
+})()

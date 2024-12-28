@@ -35,13 +35,13 @@ const setupEventHandlers = ({ client, eventHandlers }) => {
         
         for (const [eventName, handler] of Object.entries(sortedHandlers[listenerType])) {
             // check how spreading args impacts code
-            client[listenerType](eventName, (...args) => handler({ client, ...args}))
+            client[listenerType](eventName, async (...args) => handler({ client, ...args}))
         }
     }
 } 
 
 
 module.exports = {
-    default: setupEventHandlers,
+    setupEventHandlers,
     eventHandlers
 };
