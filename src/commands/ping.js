@@ -1,4 +1,5 @@
-const { default: buildCommand } = require('./__commandBuilder__')
+const { default: buildCommand, createSlashCommandDataOption } = require('./__commandBuilder__')
+
 const { enums: { commandOptionTypes }} = require('../utils')
 
 module.exports = buildCommand({
@@ -6,7 +7,7 @@ module.exports = buildCommand({
 		name: 'ping', 
 		description: 'Replies with Pong!', 
 		options: [
-			{ name: 'public', description: 'Sets ephemeral to false', type: commandOptionTypes.BOOLEAN }
+			createSlashCommandDataOption({ name: 'private', description: 'Sets ephemeral to true', type: commandOptionTypes.BOOLEAN })
 		],
 	},
 	execute: () => {

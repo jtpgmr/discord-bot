@@ -2,14 +2,14 @@ const { MessageFlags, SlashCommandBuilder } = require('discord.js');
 
 const createSlashCommandDataOption = ({ name, description, type, required = false, options = [] }) => ({ ...options, name, description, type, required });
 
-const createSlashCommandExecute = ({ execute, interaction }) => {
-    let { content, flags = [] } = execute({ interaction })
+const createSlashCommandExecute = async ({ execute, features={} }) => {
+    let { content, flags = [] } = await execute({ features })
     
-    if (!interaction.options.getBoolean('public')) flags.push(MessageFlags.Ephemeral)
+    if (!!features.interaction.options.getBoolean('private')) flags.push(MessageFlags.Ephemeral)
         
     flags = [...new Set(flags)]
-        
-    interaction.reply({ flags, content })
+            
+    features.interaction.reply({ flags, content })
 }
 
 // setCommand keys must refer to a method of the classes `SharedNameAndDescription` or `SharedSlashCommand`
@@ -28,10 +28,18 @@ const createSlashCommandData = ({ name, description, attributes = {}, options = 
     return command 
 }
 
-const buildCommand = ({ data, execute, interaction, overrideDefaultExecute=false }) => {
+const buildCommand = ({ data, execute, overrideDefaultExecute = false }) => {
+    // `required` options must be placed before non-required options
+    data.options.sort((a,b) => {
+        if (a.required > b.required) return -1
+        if (a.required < b.required) return 1
+        return 0
+    })
+        
     return {
         data: createSlashCommandData(data),
-        execute: !!overrideDefaultExecute ? execute : interaction => createSlashCommandExecute({ execute, interaction })
+        // TODO: Test behavior
+        execute: !!overrideDefaultExecute ? async features => execute({ features }) : async features => createSlashCommandExecute({ execute, features })
     }
 }
 

@@ -2,23 +2,27 @@ const { Routes } = require('discord.js');
 const { discordCredentials: { DISCORD_BOT_CLIENT_ID, DISCORD_GUILD_ID } } = require('../config');
 const { enums: { commandTypes } } = require('../utils');
 const ping = require('./ping');
+const ask = require('./ask');
 
-const commandHandlers = { ping };
 
-const setupCommandHandlers = async ({ client, commandHandlers }) => {
+const commandHandlers = { ping, ask };
+
+const registerCommandHandlers = async ({ client, commandHandlers, }) => {
 	// add command handlers to bot client
     for (const [key, command] of Object.entries(commandHandlers)) {
         if ('data' in command && 'execute' in command) {
-			client.commands.set(command.data.name, command);
+			const { data, execute } = command
+			client.commands.set(data.name, { data, execute });
 		} else {
 			console.warn(`[WARNING] Command handler with the key "${key}" is missing a required "data" or "execute" property.`);
 		}
     }
 	
+	console.log('Started refreshing application (/) commands.');
+	
+	// TODO: Save commands in DB and only execute code below if a change is identified
 	// register the slash commands to the API
-	try {
-		console.log('Started refreshing application (/) commands.');
-			
+	try {			
 		await client.rest.put(
 			Routes.applicationGuildCommands(DISCORD_BOT_CLIENT_ID, DISCORD_GUILD_ID),
 			
@@ -26,13 +30,14 @@ const setupCommandHandlers = async ({ client, commandHandlers }) => {
 			{ body: Array.from(client.commands, ([key, value]) => ({ ...value.data, name: key, type: commandTypes.CHAT_INPUT })) },
 		);
 		
-		console.log('Successfully reloaded application (/) commands.');
 	} catch (error) {
 		console.error(error);
 	}
+	
+	console.log('Successfully reloaded application (/) commands.');
 };
 
 module.exports = {
-	setupCommandHandlers,
+	registerCommandHandlers,
 	commandHandlers,
 };

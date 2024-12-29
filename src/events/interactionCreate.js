@@ -1,17 +1,17 @@
-const interactionCreate = ({ client, ...interaction }) => {
-    const [cmdInteraction] = Object.values(interaction)
-    
-    if (!cmdInteraction.isChatInputCommand()) return;
+const interactionCreate = async ({ client, globalFeatures, ...args }) => {
+    const [interaction] = Object.values(args)
 
-    const command = client.commands.get(cmdInteraction.commandName);
+    if (!interaction.isChatInputCommand()) return;
+    
+    const command = client.commands.get(interaction.commandName);
 
     if (!command) {
-        console.error(`No command matching ${cmdInteraction.commandName} was found.`);
+        console.error(`No command matching ${interaction.commandName} was found.`);
         return;
     }
-
+            
     try {
-         command.execute(cmdInteraction);
+         await command.execute({ interaction, ...globalFeatures });
     } catch (error) {
         console.error(error);
         throw error

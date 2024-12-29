@@ -35,7 +35,6 @@ const ready = async ({ client }) => {
                 [PermissionsBitField.Flags.SendMessages]: true,  
             })
             
-            // await channel.send('token update test')   
         }
     }
     

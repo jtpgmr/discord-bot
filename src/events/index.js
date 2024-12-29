@@ -20,12 +20,12 @@ const eventHandlers = {
 };
 
 
-const setupEventHandlers = ({ client, eventHandlers }) => {
+const setupEventHandlers = async ({ client, eventHandlers, globalFeatures = {} }) => {
     const { once } = eventHandlers
     
     // sorts listeners so that 'once' listener events (used for setup) occur first
     const sortedHandlers = { once, ...eventHandlers }
-    
+        
     for (const listenerType in sortedHandlers) {
         if (listenerType === 'once') {
             // sorts 'once' listeners so that `ready` occurs first
@@ -35,7 +35,7 @@ const setupEventHandlers = ({ client, eventHandlers }) => {
         
         for (const [eventName, handler] of Object.entries(sortedHandlers[listenerType])) {
             // check how spreading args impacts code
-            client[listenerType](eventName, async (...args) => handler({ client, ...args}))
+            client[listenerType](eventName, async (...args) => handler({ ...args, client, globalFeatures }))
         }
     }
 } 

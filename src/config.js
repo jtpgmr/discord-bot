@@ -1,4 +1,12 @@
-require('@dotenvx/dotenvx').config();
+const dotenv = require('@dotenvx/dotenvx');
+const path = require('path');
+
+const env = !Boolean(process.env.NODE_ENV) ? 'PROD' : String(process.env.NODE_ENV)
+const projectDirName = process.cwd()
+
+const envFilePath = env === 'DEV' ? path.resolve(projectDirName, '.env.dev') : path.resolve(projectDirName, '.env')
+
+dotenv.config({ path: envFilePath })
 
 const {
     DISCORD_BOT_TOKEN, 
@@ -12,7 +20,7 @@ const {
     DB_DIALECT,
     DB_PORT,
     
-    NODE_ENV
+    OPENAI_API_KEY,
 } = process.env;
 
 const discordCredentials = {
@@ -22,18 +30,17 @@ const discordCredentials = {
     DISCORD_USER_ACTIVITY_CHANNEL
 }
 
-const ENV = !Boolean(NODE_ENV) ? 'PROD' : NODE_ENV
-
 const databaseCredentials = {
     username: DB_USER,
     password: DB_PASSWORD,
     host: DB_HOST,
     dialect: DB_DIALECT,
     port: DB_PORT,
-    logging: ENV === 'DEV' ? console.log : false
+    logging: env === 'DEV' ? console.log : false
 }
 
 module.exports = {
     discordCredentials,
-    databaseCredentials
+    databaseCredentials,
+    OPENAI_API_KEY
 }

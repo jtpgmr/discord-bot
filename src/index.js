@@ -1,15 +1,17 @@
 const { Client, Collection, GatewayIntentBits } = require('discord.js');
+const { OpenAI } = require('openai');
 
 const { setupEventHandlers, eventHandlers } = require('./events')
-const { setupCommandHandlers, commandHandlers } = require('./commands')
+const { registerCommandHandlers, commandHandlers } = require('./commands')
 
 const { helpers: { createDbConn } } = require('./utils')
 const { 
     databaseCredentials, 
-    discordCredentials: { DISCORD_BOT_TOKEN }
+    discordCredentials: { DISCORD_BOT_TOKEN },
+    OPENAI_API_KEY
 } = require('./config')
 
-const client = new Client({
+const discord = new Client({
     intents: [
         GatewayIntentBits.Guilds, // View Channels and Messages
         GatewayIntentBits.GuildPresences, // View Member Statuses
@@ -17,15 +19,19 @@ const client = new Client({
     ]
 });
 
-(async () => { 
-    // initialize bot
-    client.login(DISCORD_BOT_TOKEN)
+const ai = new OpenAI({ apiKey: OPENAI_API_KEY });
 
+const db = createDbConn(databaseCredentials);
+
+(async () => {
+    // initialize bot
+    discord.login(DISCORD_BOT_TOKEN)
+    
     // setup custom slash commands
-    client.commands = new Collection();
-    setupCommandHandlers({ client, commandHandlers });
+    discord.commands = new Collection();
+    await registerCommandHandlers({ client: discord, commandHandlers });
 
     // set webhook event handlers
-    setupEventHandlers({ client, eventHandlers })
+    await setupEventHandlers({ client: discord, eventHandlers, globalFeatures: { ai, db } })
 
-})()
+})();

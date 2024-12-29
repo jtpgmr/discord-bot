@@ -1,7 +1,14 @@
 # compiled output
-/node_modules
+**/node_modules
 
 # dotenv environment variable files
-/*.env
-/*.env*
+**/*.env
+**/*.env*
 !.env.example
+
+/*.js
+**/*.json
+
+!package.json
+!package-lock.json
+!jsconfig.json

@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "main": "src/index.js",
   "scripts": {
-    "dev": "nodemon src/index.js"
+    "dev": "cross-env NODE_ENV=DEV nodemon src/index.js",
+    "start": "cross-env NODE_ENV=PROD node src/index.js"
   },
   "keywords": [],
   "author": "",
@@ -12,10 +13,12 @@
   "dependencies": {
     "@dotenvx/dotenvx": "^1.20.0",
     "discord.js": "^14.16.3",
+    "openai": "^4.77.0",
     "pg": "^8.13.1",
     "sequelize": "^6.37.5"
   },
   "devDependencies": {
+    "cross-env": "^7.0.3",
     "nodemon": "^3.1.7"
   }
 }
