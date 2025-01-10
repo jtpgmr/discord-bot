@@ -1,5 +1,4 @@
 const { default: buildCommand, createSlashCommandDataOption } = require('./__commandBuilder__')
-
 const { enums: { commandOptionTypes }} = require('../utils')
 
 module.exports = buildCommand({
@@ -10,7 +9,7 @@ module.exports = buildCommand({
 			createSlashCommandDataOption({ name: 'private', description: 'Sets ephemeral to true', type: commandOptionTypes.BOOLEAN })
 		],
 	},
-	execute: () => {
+	execute: ({ contentType }) => {
 		return { content: "Pong!" }
 	}
-})
+});

@@ -1,6 +1,7 @@
 const interactionCreate = require('./interactionCreate');
 const ready = require('./ready');
 const presenceUpdate = require('./presenceUpdate');
+const voiceStateUpdate = require('./voiceStateUpdate');
 const { Events } = require('discord.js');
 
 const eventHandlers = {
@@ -16,9 +17,9 @@ const eventHandlers = {
         // triggers whenever a member status changes
         [Events.PresenceUpdate]: presenceUpdate,
         [Events.InteractionCreate]:  interactionCreate,
+        [Events.VoiceStateUpdate]: voiceStateUpdate
     }
 };
-
 
 const setupEventHandlers = async ({ client, eventHandlers, globalFeatures = {} }) => {
     const { once } = eventHandlers
@@ -35,11 +36,10 @@ const setupEventHandlers = async ({ client, eventHandlers, globalFeatures = {} }
         
         for (const [eventName, handler] of Object.entries(sortedHandlers[listenerType])) {
             // check how spreading args impacts code
-            client[listenerType](eventName, async (...args) => handler({ ...args, client, globalFeatures }))
+            client[listenerType](eventName, async (...args) => handler({ client, globalFeatures, ...args }))
         }
     }
 } 
-
 
 module.exports = {
     setupEventHandlers,

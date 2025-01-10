@@ -1,7 +1,6 @@
 const interactionCreate = async ({ client, globalFeatures, ...args }) => {
     const [interaction] = Object.values(args)
-
-    if (!interaction.isChatInputCommand()) return;
+    if (!interaction || !interaction.isChatInputCommand()) return;
     
     const command = client.commands.get(interaction.commandName);
 

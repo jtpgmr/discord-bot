@@ -1,8 +1,8 @@
-const presenceUpdate = ({ client, ...presenceStatuses }) => {
-    const [oldPresence, newPresence] = Object.values(presenceStatuses)
+const presenceUpdate = ({ client, ...args }) => {
+    const [oldPresence, newPresence] = Object.values(args)
 
     // statuses: online, offline, idle, dnd (do not disturb)
-    const {member, status } = newPresence;
+    const { member, status } = newPresence;
     
     let statusMessage = ''
     if (!oldPresence) {
@@ -11,7 +11,7 @@ const presenceUpdate = ({ client, ...presenceStatuses }) => {
         statusMessage = `${member.user.tag} updated status from ${oldPresence.status} to ${status}`
     }
     
-    client.activityChannel.send(statusMessage)
+    // await client.activityChannel.send(statusMessage)
 }
 
 module.exports = presenceUpdate;
