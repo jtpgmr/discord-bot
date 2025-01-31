@@ -15,12 +15,16 @@ const createSlashCommandExecute = async ({ execute, features={} }) => {
         return
     }
     
-    response = createChatInputCommandReply(response)
-    
-    if (!!response.content && !!(typeof response.content === 'object')) {
-        response.content = Object.entries(response.content).map(([k,v]) => !!v ? `${k}: ${v}` : '').join('\n')
+    if (typeof response === 'string') {
+        response = { content: response }
     }
-            
+    
+    response = createChatInputCommandReply(response) 
+
+    if (!!response.content && !!(typeof response.content === 'object')) {
+        response.content = Object.entries(response.content).map(([k,v]) => !!v ? `${k}: ${JSON.stringify(v)}` : '').join('\n')
+    }
+                
     if (!!features.interaction.options.getBoolean('private')) response.flags.push(MessageFlags.Ephemeral)
         
     response.flags = [...new Set(response.flags)]

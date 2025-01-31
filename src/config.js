@@ -19,6 +19,7 @@ const {
     DB_HOST,
     DB_DIALECT,
     DB_PORT,
+    DB_NAME,
     
     OPENAI_API_KEY,
 } = process.env;
@@ -34,6 +35,7 @@ const databaseCredentials = {
     username: DB_USER,
     password: DB_PASSWORD,
     host: DB_HOST,
+    database: DB_NAME,
     dialect: DB_DIALECT,
     port: DB_PORT,
     logging: env === 'DEV' ? console.log : false

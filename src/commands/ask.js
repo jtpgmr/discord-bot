@@ -2,13 +2,11 @@ const { default: buildCommand, createSlashCommandDataOption } = require('./__com
 const { enums: { commandOptionTypes }} = require('../utils')
 const { ai } = require('../clients');
 
-const { createMessageEmbed } = require('../responses/embed');
-
 const promptPreface = `
 Please respond only in JSON format. The structure should include:
 	- Title: A title representing the topic of the conversation
 	- Data: An object, array or string containing the main response.
-	- References: An array of sources where the information used to generate the response was derived from
+	- References: An array of sources where the information used to generate the response was derived from. If empty, default to an empty array. [] Do NOT LEAVE BLANK
 `
 
 module.exports = buildCommand({
@@ -22,17 +20,13 @@ module.exports = buildCommand({
 	},
 	customFeatures: { ai },
 	execute: async ({ features }) => {
-		console.log(features)
 		const { ai, interaction } = features
+		
 		const prompt = interaction.options.getString('prompt');
-						
-		const res = await ai.chat.completions.create({
-			model: 'gpt-4o-mini',
-			messages: [{ role: 'user', content: promptPreface + '\n' + prompt }]
-		}) 
+		const res = await ai.sendMessage({ newMessage: prompt })
 				
 		const answer = JSON.parse(
-			res.choices[0].message.content
+			res
 			// remove json markdown syntax from response string
 			.replace(/^```json\n/, '')
 			.replace(/\n```$/, '')
@@ -40,19 +34,9 @@ module.exports = buildCommand({
 								
 		return {
 			content: {
-				"Question": prompt,
+				"question": prompt,
 				...answer
 		  	}
 		};
-		
-		// return {
-		// 	embeds: [createMessageEmbed({
-		// 		title: 'Test',
-		// 		fields: [    
-		// 			{ name: '**Q**', value: prompt },
-		// 			{ name: '**A**', value: answer }
-		// 		]
-		// 	})]
-		// }
 	}
 })
