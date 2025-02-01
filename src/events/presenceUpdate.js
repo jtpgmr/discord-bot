@@ -11,6 +11,7 @@ const presenceUpdate = ({ client, ...args }) => {
         statusMessage = `${member.user.tag} updated status from ${oldPresence.status} to ${status}`
     }
     
+    // console.log(status)
     // await client.activityChannel.send(statusMessage)
 }
 

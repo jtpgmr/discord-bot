@@ -1,4 +1,4 @@
-const { Sequelize, DataTypes } = require('sequelize');
+const { DataTypes } = require('sequelize');
 const { db } = require('../clients')
 
 const Guild = db.define(
@@ -17,7 +17,7 @@ const Guild = db.define(
             unique: true
         },
         discordId: {
-            type: DataTypes.INTEGER,
+            type: DataTypes.STRING,
             allowNull: false,
             primaryKey: true,
             autoIncrementIdentity: true,
@@ -26,7 +26,11 @@ const Guild = db.define(
         ownerId: {
             type: DataTypes.UUIDV4,
             allowNull: false,
-            unique: true
+            unique: true,
+            references: {
+                model: "User",
+                key: "id"
+            }
         },
         name: {
             type: DataTypes.UUIDV4,
@@ -50,7 +54,7 @@ const Guild = db.define(
             allowNull: true,
         },
         updatedBy: {
-            type: DataTypes.DATE,
+            type: DataTypes.UUIDV4,
             allowNull: true,
             references: {
                 model: "User",

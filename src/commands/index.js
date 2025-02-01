@@ -1,11 +1,14 @@
+const { UniqueConstraintError } = require('sequelize');
+const { v4: uuidv4 } = require('uuid')
+
+const { Command, CommandOption } = require('../models');
+
 const { Routes } = require('discord.js');
 const { discordCredentials: { DISCORD_BOT_CLIENT_ID, DISCORD_GUILD_ID } } = require('../config');
 const { enums: { commandTypes } } = require('../utils');
 const ping = require('./ping');
 const ask = require('./ask');
 const summon = require('./voiceChannelSummon')
-
-const withProps = (handler, props) => (...args) => handler.bind({ ...props, ...args });
 
 const commandHandlers = { 
 	ping, 
@@ -14,22 +17,25 @@ const commandHandlers = {
 };
 
 class SlashCommandData {
-	constructor({ name, description, type, options, nsfw = false }) {
+	constructor({ name, description, type, options, nsfw = false, disabled = false, callbackSource = null }) {
 		this.name = name
 		this.description = description
 		this.type = type
 		this.nsfw = nsfw
 		this.options = options
+		this.disabled = disabled
+		this.callbackSource = callbackSource
 	}
 }
 
 class SlashCommandDataOption {
-	constructor({ name, description, type, options, required }) {
+	constructor({ name, description, type, options, required, disabled = false }) {
 		this.name = name
 		this.description = description
 		this.type = type
 		this.required = required
 		this.options = options
+		this.disabled = disabled
 	}
 }
 
@@ -61,23 +67,10 @@ const registerCommandHandlers = async ({ client, commandHandlers, }) => {
     }
 	
 	console.log(`Checking if slash commands (/) commands have changed...`);
-	
-	// commands currently configured on Discord's API
-	let existingCommands = await client.rest.get(
-		Routes.applicationGuildCommands(DISCORD_BOT_CLIENT_ID, DISCORD_GUILD_ID),
-	);
-	
-	
-	existingCommands = existingCommands.map(ec => new SlashCommandData({ 
-		...ec, 
-		options: !!Array.isArray(ec.options) && ec.options.length  > 0 ? ec.options.map(opt => new SlashCommandDataOption({ 
-			...opt,
-			options: !!Array.isArray(opt.options) && opt.options.length > 0 ? opt.options : undefined
-		 })) : undefined 
-	}))
+	// const dbSlashCommands = await Command.findAll({ where: { type: commandTypes.CHAT_INPUT }})
 		
 	// current command configuration within the code
-	const loadedCommands = Array.from(client.commands, ([key, value]) => (
+	const codedCommands = Array.from(client.commands, ([key, value]) => (
 		new SlashCommandData({ 
 			...value.data, 
 			name: key, 
@@ -90,29 +83,65 @@ const registerCommandHandlers = async ({ client, commandHandlers, }) => {
 				: undefined // to match options being set to undefined on Discord if no options are present
 		})
 	))
+	
+	// commands currently configured on Discord's API
+	let existingCommands = await client.rest.get(
+		Routes.applicationGuildCommands(DISCORD_BOT_CLIENT_ID, DISCORD_GUILD_ID),
+	);
+	
+	// convert commands on Discord's API to custom class object
+	existingCommands = existingCommands.map(ec => new SlashCommandData({ 
+		...ec, 
+		options: !!Array.isArray(ec.options) && ec.options.length  > 0 ? ec.options.map(opt => new SlashCommandDataOption({ 
+			...opt,
+			options: !!Array.isArray(opt.options) && opt.options.length > 0 ? opt.options : undefined
+			})) : undefined 
+	}))
+	
+	// for (const command of codedCommands) {
+	// 	try {
+	// 		await Command.create({ 
+	// 			...command,
+	// 			id: uuidv4()
+	// 		})
+	// 	} catch (err) {
+	// 		if (
+	// 			err instanceof UniqueConstraintError &&
+	// 			err.original.detail.includes(command.name)
+	// 		) {
+				
+	// 		}
+	// 	}
+	// }
+	// console.log(codedCommands)
+	// throw new Error('dev')
 
 	if (
 		existingCommands.filter(eC =>
-			loadedCommands.filter(lC =>
+			codedCommands.filter(lC =>
 				compareValues(lC, eC)
 			).length === 1
-		).length === loadedCommands.length
+		).length === codedCommands.length
 	) {
 		console.log('Application `/` command configurations have not changed');
 		
 		return
 	}
+	
+
 
 	// TODO: Save commands in DB and only execute code below if a change is identified
 	// register the slash commands to the API
 	try {			
 		await client.rest.put(
 			Routes.applicationGuildCommands(DISCORD_BOT_CLIENT_ID, DISCORD_GUILD_ID),
-			{ body: loadedCommands },
+			{ body: codedCommands },
 		);
 	} catch (error) {
 		console.error(error);
 	}
+	
+
 	
 	console.log('Successfully reloaded application `/` commands.');
 };

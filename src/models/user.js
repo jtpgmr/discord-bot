@@ -1,4 +1,4 @@
-const { Sequelize, DataTypes } = require('sequelize');
+const { DataTypes } = require('sequelize');
 const { db } = require('../clients')
 
 const User = db.define(
@@ -18,20 +18,11 @@ const User = db.define(
             unique: true
         },
         discordId: {
-            type: DataTypes.INTEGER,
-            allowNull: false,
-        },
-        discordUsername: {
             type: DataTypes.STRING,
             allowNull: false,
-        },
-        globalName: {
-            type: DataTypes.STRING,
-            allowNull: true,
         },
         isBot: {
             type: DataTypes.BOOLEAN,
-            allowNull: true,
             defaultValue: false
         },
         createdAt: {
@@ -41,20 +32,27 @@ const User = db.define(
         },
         createdBy: {
             type: DataTypes.UUIDV4,
-            allowNull: true,
+            allowNull: false,
+            references: {
+                model: "User",
+                key: "id"
+            }
         },
         updatedAt: {
             type: DataTypes.DATE,
-            allowNull: true,
         },
         updatedBy: {
-            type: DataTypes.DATE,
-            allowNull: true,
+            type: DataTypes.UUIDV4,
+            references: {
+                model: "User",
+                key: "id"
+            }
         },
     },
     {
         schema: 'discordBot',
-        tableName: 'users'
+        tableName: 'users',
+        timestamps: false
     },
 );
 
