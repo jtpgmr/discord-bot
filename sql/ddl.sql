@@ -38,15 +38,12 @@ create table if not exists "discordBot".commands (
 	"updatedBy" uuid null references "discordBot".users(id)
 );
 
--- https://discord.js.org/docs/packages/discord.js/main/CommandInteractionOptionResolver:Class
-create table if not exists "discordBot"."commandOptions" (
+create table if not exists "discordBot"."subGroupCommands" (
     "serialId" int4 generated always as identity primary key,
     id uuid not null unique,
     "commandId" uuid not null references "discordBot".commands(id),
     name varchar not null,
     description varchar null,
-    type int2 not null,
-    required bool null default false,
     disabled bool null default false,
 	"createdAt" timestamptz not null default now(),
 	"createdBy" uuid not null references "discordBot".users(id),
@@ -55,6 +52,39 @@ create table if not exists "discordBot"."commandOptions" (
 	unique("commandId", name)
 );
 
+-- https://discord.js.org/docs/packages/discord.js/main/CommandInteractionOptionResolver:Class
+create table if not exists "discordBot"."commandOptions" (
+    "serialId" int4 generated always as identity primary key,
+    id uuid not null unique,
+    "commandId" uuid not null references "discordBot".commands(id),
+	"subGroupCommandId" uuid null references "discordBot"."subGroupCommands"(id),
+    name varchar not null,
+    description varchar null,
+    type int2 not null CHECK (type <> 2), -- cannot be the value of a group command
+    required bool null default false,
+    disabled bool null default false,
+	"createdAt" timestamptz not null default now(),
+	"createdBy" uuid not null references "discordBot".users(id),
+	"updatedAt" timestamptz null,
+	"updatedBy" uuid null references "discordBot".users(id),
+	unique("commandId", "subGroupCommandId", name)
+);
+
+-- https://discord.js.org/docs/packages/discord.js/main/CommandInteractionOptionResolver:Class
+create table if not exists "discordBot"."registeredAIModels" (
+    "serialId" int4 generated always as identity primary key,
+    id uuid not null unique,
+	category int2 not null, -- 1: LLM, 2: TTS, 3: SST
+	"subCategory" int2 not null, -- depends on category
+	"provider" varchar not null,
+	"modelName" varchar not null,
+	"isActive" bool null default true,
+	"createdAt" timestamptz not null default now(),
+	"createdBy" uuid not null references "discordBot".users(id),
+	"updatedAt" timestamptz null,
+	"updatedBy" uuid null references "discordBot".users(id),
+	unique("provider", "modelName")
+);
 
 
 create user "" with password '';

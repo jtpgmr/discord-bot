@@ -2,13 +2,15 @@
 **/node_modules
 
 # dotenv environment variable files
-**/*.env
 **/*.env*
-!.env.example
 
 /*.js
 **/*.json
+/*_key
+!*.example*
 
 !package.json
 !package-lock.json
 !jsconfig.json
+!Dockerfile
+!buildspec.yml

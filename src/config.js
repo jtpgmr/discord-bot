@@ -1,5 +1,7 @@
 const dotenv = require('@dotenvx/dotenvx');
 const path = require('path');
+let dbConfig = require('../db-config.json');
+const aiConfig = require('../ai-config.json');
 
 const env = !Boolean(process.env.NODE_ENV) ? 'PROD' : String(process.env.NODE_ENV)
 const projectDirName = process.cwd()
@@ -13,36 +15,22 @@ const {
     DISCORD_BOT_CLIENT_ID,
     DISCORD_GUILD_ID,
     DISCORD_USER_ACTIVITY_CHANNEL,
-    
-    DB_USER,
-    DB_PASSWORD,
-    DB_HOST,
-    DB_DIALECT,
-    DB_PORT,
-    DB_NAME,
-    
-    OPENAI_API_KEY,
 } = process.env;
 
-const discordCredentials = {
+const discordCreds = {
     DISCORD_BOT_TOKEN, 
     DISCORD_BOT_CLIENT_ID,
     DISCORD_GUILD_ID,
     DISCORD_USER_ACTIVITY_CHANNEL
 }
 
-const databaseCredentials = {
-    username: DB_USER,
-    password: DB_PASSWORD,
-    host: DB_HOST,
-    database: DB_NAME,
-    dialect: DB_DIALECT,
-    port: DB_PORT,
+dbConfig = {
+    ...dbConfig,
     logging: env === 'DEV' ? console.log : false
 }
 
 module.exports = {
-    discordCredentials,
-    databaseCredentials,
-    OPENAI_API_KEY
+    discordCreds,
+    dbConfig,
+    aiConfig
 }

@@ -1,11 +1,14 @@
-const Command = require('./command');
-const CommandOption = require('./commandOption');
-const Guild = require('./guild');
-const User = require('./user');
+const { RegisteredAIModel } = require('./ai')
+const { Command, CommandOption, SubGroupCommand } = require('./commands');
+const { Guild, User } = require('./guild');
 
 module.exports = {
+    RegisteredAIModel,
+    
     Command,
     CommandOption,
+    SubGroupCommand,
+    
     Guild,
     User
 }

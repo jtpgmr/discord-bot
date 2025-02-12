@@ -1,19 +1,16 @@
-const { UniqueConstraintError } = require('sequelize');
-const { v4: uuidv4 } = require('uuid')
-
-const { Command, CommandOption } = require('../models');
-
 const { Routes } = require('discord.js');
-const { discordCredentials: { DISCORD_BOT_CLIENT_ID, DISCORD_GUILD_ID } } = require('../config');
-const { enums: { commandTypes } } = require('../utils');
+const { discordCreds: { DISCORD_BOT_CLIENT_ID, DISCORD_GUILD_ID } } = require('../config');
+const { constants: { commandTypes } } = require('../utils');
 const ping = require('./ping');
 const ask = require('./ask');
 const summon = require('./voiceChannelSummon')
+const events = require('./events')
 
 const commandHandlers = { 
 	ping, 
 	ask, 
-	summon 
+	summon,
+	events
 };
 
 class SlashCommandData {

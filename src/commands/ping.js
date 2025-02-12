@@ -1,5 +1,5 @@
 const { default: buildCommand, createSlashCommandDataOption } = require('./__commandBuilder__')
-const { enums: { commandOptionTypes }} = require('../utils')
+const { constants: { commandOptionTypes }} = require('../utils')
 
 module.exports = buildCommand({
 	data: {

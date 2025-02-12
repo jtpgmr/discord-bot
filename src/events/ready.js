@@ -1,9 +1,9 @@
-const {  ValidationError, ForeignKeyConstraintError, UniqueConstraintError, Op } = require('sequelize');
+const {  ValidationError, Op } = require('sequelize');
 
 const { v4: uuidv4 } = require('uuid')
 const { User, Guild } = require('../models');
 
-const { discordCredentials: { DISCORD_GUILD_ID, DISCORD_USER_ACTIVITY_CHANNEL } } = require('../config')
+const { discordCredentials } = require('../config')
 
 const { Collection, PermissionsBitField, TextChannel, VoiceChannel } = require('discord.js');
 
@@ -11,25 +11,30 @@ const { setupEventHandlers, eventHandlers } = require('../events');
 const { registerCommandHandlers, commandHandlers } = require('../commands');
 
 const ready = async ({ client }) => {
-    // console.log(client.user)
     const { tag: botName, id: discordId } = client.user
-    console.log(`Logging in as ${botName}`);
     
-    console.log(client.isReady())
-    // setup custom slash commands
-    client.commands = new Collection();
-    await registerCommandHandlers({ client, commandHandlers });
+    let dbBotUser = await User.findOne({ where: { discordId }})
 
+    if (!dbBotUser) {
+        const dbBotId = uuidv4();
+        
+        dbBotUser = await User.create({
+            id: dbBotId,
+            createdBy: dbBotId,
+            discordId,
+            isBot: client.user.bot || true,
+        })
+    }
     
-    // set webhook event handlers
-    await setupEventHandlers({ client, eventHandlers });
+    // client.user._dbId = dbBotUser.dataValues.id
+    dbBotUser = dbBotUser.dataValues
     
-    return
+    console.log(`Logging in as ${botName}`);
     
     // update here to expand bot to multiple guilds
     for (const [, appGuild] of client.guilds.cache) {    
 
-        client.channels.cache.forEach(channel => {   
+        client.channels.cache.forEach(channel => {
             if (!(channel instanceof TextChannel || channel instanceof VoiceChannel)) return
             
             const { guildId, members, name, permissionOverwrites, messages } = channel
@@ -45,11 +50,6 @@ const ready = async ({ client }) => {
             }
         })
         
-        // await client.user.setPresence({
-        //     status: 'offline', // online, idle, dnd, invisible
-        //    // activities: [{ name: 'Serving the server', type: 3 }] // 0: Playing, 1: Streaming, 2: Listening, 3: Watching, 5: Competing
-        // });
-        
         // const readyMessage = `Bot "${botName}" is now active and listening...`
         continue
         console.log(appGuild.members.cache.filter(mem => [dbBotUser.discordId].filter(user => user === mem.user.id)).length === 0)
@@ -58,9 +58,6 @@ const ready = async ({ client }) => {
             async mem => (await User.findAll()).filter(user => user.dataValues.discordId === mem.user.id).length === 0
         ).map(u => u.user))
         const newUsers2 = await User.findAll({ where: { discordId: { [Op.in]: appGuild.members.cache.map(mem => mem.user.id) }}})
-
-
-   
 
         console.log(newUsers.length > 0 ? `Adding ${newUsers.length} users into the database...` : 'No new users to be added to the database.')
         for (const newUser of newUsers) {
@@ -85,6 +82,15 @@ const ready = async ({ client }) => {
             } else throw err
         }
     }
+    
+    // setup custom slash commands
+    client.commands = new Collection();
+    await registerCommandHandlers({ client, commandHandlers });
+
+    // set webhook event handlers
+    await setupEventHandlers({ client, eventHandlers });
+    
+
 };
 
 module.exports = ready;

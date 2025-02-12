@@ -1,14 +1,13 @@
 const { DataTypes } = require('sequelize');
 const { db } = require('../clients')
 
-const User = db.define(
-    'User',
+const RegisteredAIModel = db.define(
+    'RegisteredAIModel',
     {
         serialId: {
             type: DataTypes.INTEGER,
             allowNull: false,
             primaryKey: true,
-            autoIncrement: true,
             autoIncrementIdentity: true,
             unique: true,
         },
@@ -17,13 +16,25 @@ const User = db.define(
             allowNull: false,
             unique: true
         },
-        discordId: {
+        category: {
+            type: DataTypes.SMALLINT,
+            allowNull: false,
+        },
+        subCategory: {
+            type: DataTypes.SMALLINT,
+            allowNull: false,
+        },
+        provider: {
             type: DataTypes.STRING,
             allowNull: false,
         },
-        isBot: {
+        modelName: {
+            type: DataTypes.STRING,
+            allowNull: false,
+        },
+        isActive: {
             type: DataTypes.BOOLEAN,
-            defaultValue: false
+            defaultValue: true
         },
         createdAt: {
             type: DataTypes.DATE,
@@ -33,27 +44,27 @@ const User = db.define(
         createdBy: {
             type: DataTypes.UUIDV4,
             allowNull: false,
-            references: {
-                model: "User",
-                key: "id"
-            }
+            references: { model: "User", key: "id" }
         },
         updatedAt: {
             type: DataTypes.DATE,
+            allowNull: true,
         },
         updatedBy: {
             type: DataTypes.UUIDV4,
-            references: {
-                model: "User",
-                key: "id"
-            }
+            allowNull: true,
+            references: { model: "User", key: "id" }
         },
     },
     {
         schema: 'discordBot',
-        tableName: 'users',
-        timestamps: false
+        tableName: 'registeredAIModels',
+        timestamps: false,
+        indexes: [{  
+            unique: true, 
+            fields: ['provider', 'modelName'] 
+        }]
     },
 );
 
-module.exports = User
+module.exports = { RegisteredAIModel }

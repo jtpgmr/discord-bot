@@ -1,4 +1,4 @@
-const enums = require('./enums');
+const constants = require('./constants');
 const helpers = require('./helpers');
 
-module.exports = { enums, helpers }
+module.exports = { constants, helpers }

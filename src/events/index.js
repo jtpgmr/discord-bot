@@ -17,7 +17,7 @@ const eventHandlers = {
         // triggers whenever a member status changes
         [Events.PresenceUpdate]: presenceUpdate,
         [Events.InteractionCreate]:  interactionCreate,
-        [Events.VoiceStateUpdate]: voiceStateUpdate
+        [Events.VoiceStateUpdate]: voiceStateUpdate,
     }
 };
 

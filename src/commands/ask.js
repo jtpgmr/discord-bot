@@ -1,13 +1,7 @@
 const { default: buildCommand, createSlashCommandDataOption } = require('./__commandBuilder__')
-const { enums: { commandOptionTypes }} = require('../utils')
-const { ai } = require('../clients');
-
-const promptPreface = `
-Please respond only in JSON format. The structure should include:
-	- Title: A title representing the topic of the conversation
-	- Data: An object, array or string containing the main response.
-	- References: An array of sources where the information used to generate the response was derived from. If empty, default to an empty array. [] Do NOT LEAVE BLANK
-`
+const { constants: { commandOptionTypes }} = require('../utils')
+const { default: DiscordBotAIAdapters } = require('../events/customFeatures/aiAdapters');
+const { aiCategoryNames } = require('../utils/constants');
 
 module.exports = buildCommand({
 	data: {
@@ -18,7 +12,7 @@ module.exports = buildCommand({
             createSlashCommandDataOption({ name: 'prompt', description: 'Prompt given to ChatGPT', type: commandOptionTypes.STRING, required: true }),
         ],
 	},
-	customFeatures: { ai },
+	customFeatures: { ai: DiscordBotAIAdapters[aiCategoryNames.LLM] },
 	execute: async ({ features }) => {
 		const { ai, interaction } = features
 		

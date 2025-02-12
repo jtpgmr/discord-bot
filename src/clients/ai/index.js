@@ -1,5 +1,3 @@
-const CustomOpenAI = require('./openai');
+const { AnthropicSDKAdapter, OpenAISDKAdapter } = require('./llm')
 
-module.exports = {
-    CustomOpenAI
-}
+module.exports = { AnthropicSDKAdapter, OpenAISDKAdapter }
