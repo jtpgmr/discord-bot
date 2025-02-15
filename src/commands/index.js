@@ -1,17 +1,9 @@
 const { Routes } = require('discord.js');
 const { discordCreds: { DISCORD_BOT_CLIENT_ID, DISCORD_GUILD_ID } } = require('../config');
 const { constants: { commandTypes } } = require('../utils');
-const ping = require('./ping');
-const ask = require('./ask');
-const summon = require('./voiceChannelSummon')
-const events = require('./events')
+const fs = require('fs')
+const path = require('path')
 
-const commandHandlers = { 
-	ping, 
-	ask, 
-	summon,
-	events
-};
 
 class SlashCommandData {
 	constructor({ name, description, type, options, nsfw = false, disabled = false, callbackSource = null }) {
@@ -26,12 +18,13 @@ class SlashCommandData {
 }
 
 class SlashCommandDataOption {
-	constructor({ name, description, type, options, required, disabled = false }) {
+	constructor({ name, description, type, options, required, choices = [], disabled = false }) {
 		this.name = name
 		this.description = description
 		this.type = type
 		this.required = required
 		this.options = options
+		this.choices = choices
 		this.disabled = disabled
 	}
 }
@@ -52,7 +45,28 @@ const compareValues = (value1, value2) => {
     return value1 === value2;
 }
 
-const registerCommandHandlers = async ({ client, commandHandlers, }) => {
+const registerCommandHandlers = async ({ client, }) => {
+	const commandHandlers = {}
+	
+	fs.readdirSync(__dirname).forEach(file => {
+		const [fileName, ext] = file.split('.')
+		
+		if (fileName === 'index' || fileName.includes('_')) return
+		
+		const fullPath = path.join(__dirname, file);
+		
+        if (fs.statSync(fullPath).isFile() && ext === 'js') {
+            const handler = require(fullPath)
+			
+			try {
+				commandHandlers[handler.data.name] = handler
+			} catch (err) {
+				console.warn(`Error occured when applying command handler at ${fullPath}`)
+				return
+			}
+        }
+    });
+	
 	// add command handlers to bot client
     for (const [key, command] of Object.entries(commandHandlers)) {
         if ('data' in command && 'execute' in command) {
@@ -63,7 +77,22 @@ const registerCommandHandlers = async ({ client, commandHandlers, }) => {
 		}
     }
 	
+	if (client.commands.size === 0) {
+		console.log(`No commands received in commands set. Clearing commands...`);
+		try {			
+			await client.rest.put(
+				Routes.applicationGuildCommands(DISCORD_BOT_CLIENT_ID, DISCORD_GUILD_ID),
+				{ body: [] },
+			);
+		} catch (error) {
+			console.error(error);
+		}
+		
+		return
+	}
+	
 	console.log(`Checking if slash commands (/) commands have changed...`);
+	
 	// const dbSlashCommands = await Command.findAll({ where: { type: commandTypes.CHAT_INPUT }})
 		
 	// current command configuration within the code
@@ -95,23 +124,6 @@ const registerCommandHandlers = async ({ client, commandHandlers, }) => {
 			})) : undefined 
 	}))
 	
-	// for (const command of codedCommands) {
-	// 	try {
-	// 		await Command.create({ 
-	// 			...command,
-	// 			id: uuidv4()
-	// 		})
-	// 	} catch (err) {
-	// 		if (
-	// 			err instanceof UniqueConstraintError &&
-	// 			err.original.detail.includes(command.name)
-	// 		) {
-				
-	// 		}
-	// 	}
-	// }
-	// console.log(codedCommands)
-	// throw new Error('dev')
 
 	if (
 		existingCommands.filter(eC =>
@@ -124,7 +136,6 @@ const registerCommandHandlers = async ({ client, commandHandlers, }) => {
 		
 		return
 	}
-	
 
 
 	// TODO: Save commands in DB and only execute code below if a change is identified
@@ -145,5 +156,5 @@ const registerCommandHandlers = async ({ client, commandHandlers, }) => {
 
 module.exports = {
 	registerCommandHandlers,
-	commandHandlers,
+	// commandHandlers,
 };

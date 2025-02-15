@@ -1,7 +1,11 @@
+const { RegisteredAIModel } = require('../models');
+
 const { default: buildCommand, createSlashCommandDataOption } = require('./__commandBuilder__')
 const { constants: { commandOptionTypes }} = require('../utils')
-const { default: DiscordBotAIAdapters } = require('../events/customFeatures/aiAdapters');
+const { default: DiscordBotAIAdapters, defaultModelNames } = require('../events/customFeatures/aiAdapters');
 const { aiCategoryNames } = require('../utils/constants');
+
+const LLMAdaptors = DiscordBotAIAdapters[aiCategoryNames.LLM]
 
 module.exports = buildCommand({
 	data: {
@@ -10,27 +14,29 @@ module.exports = buildCommand({
 		options: [
             createSlashCommandDataOption({ name: 'private', description: 'Sets ephemeral to true', type: commandOptionTypes.BOOLEAN }),	
             createSlashCommandDataOption({ name: 'prompt', description: 'Prompt given to ChatGPT', type: commandOptionTypes.STRING, required: true }),
+			createSlashCommandDataOption({ 
+				name: 'ai-model', 
+				description: 'Choose an LLM model', 
+				// required: true, 
+				type: commandOptionTypes.STRING, 
+				choices: Object.entries(LLMAdaptors).map(([modelName, Adapter]) => ({ 
+					name: `${Adapter.provider} (${modelName})`, 
+					value: modelName  
+				})) 
+			})
         ],
 	},
-	customFeatures: { ai: DiscordBotAIAdapters[aiCategoryNames.LLM] },
+	customFeatures: { ai: LLMAdaptors },
 	execute: async ({ features }) => {
 		const { ai, interaction } = features
+	
+		const selectedLLM = ai[interaction.options.getString('ai-model') || defaultModelNames[aiCategoryNames.LLM]]
 		
 		const prompt = interaction.options.getString('prompt');
-		const res = await ai.sendMessage({ newMessage: prompt })
-				
-		const answer = JSON.parse(
-			res
-			// remove json markdown syntax from response string
-			.replace(/^```json\n/, '')
-			.replace(/\n```$/, '')
-		);
+
+		const response = await selectedLLM.sendMessage({ newMessage: prompt })
 								
-		return {
-			content: {
-				"question": prompt,
-				...answer
-		  	}
-		};
+		return `**Model**: ${selectedLLM.provider} (${selectedLLM.model})\n**Q:** ${prompt}\n**A:** ${response}`
 	}
 })
+// What specific LLM model are you? What company created you?

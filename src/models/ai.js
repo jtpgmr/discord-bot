@@ -1,5 +1,5 @@
 const { DataTypes } = require('sequelize');
-const { db } = require('../clients')
+const { db } = require('../config')
 
 const RegisteredAIModel = db.define(
     'RegisteredAIModel',

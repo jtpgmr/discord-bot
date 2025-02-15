@@ -1,14 +1,11 @@
-const {  ValidationError, Op } = require('sequelize');
+
 
 const { v4: uuidv4 } = require('uuid')
-const { User, Guild } = require('../models');
-
-const { discordCredentials } = require('../config')
-
+const { User } = require('../models');
 const { Collection, PermissionsBitField, TextChannel, VoiceChannel } = require('discord.js');
-
 const { setupEventHandlers, eventHandlers } = require('../events');
-const { registerCommandHandlers, commandHandlers } = require('../commands');
+const {registerCommandHandlers} = require('../commands');
+
 
 const ready = async ({ client }) => {
     const { tag: botName, id: discordId } = client.user
@@ -52,40 +49,11 @@ const ready = async ({ client }) => {
         
         // const readyMessage = `Bot "${botName}" is now active and listening...`
         continue
-        console.log(appGuild.members.cache.filter(mem => [dbBotUser.discordId].filter(user => user === mem.user.id)).length === 0)
-        
-        const newUsers = await Promise.all(appGuild.members.cache.filter(
-            async mem => (await User.findAll()).filter(user => user.dataValues.discordId === mem.user.id).length === 0
-        ).map(u => u.user))
-        const newUsers2 = await User.findAll({ where: { discordId: { [Op.in]: appGuild.members.cache.map(mem => mem.user.id) }}})
-
-        console.log(newUsers.length > 0 ? `Adding ${newUsers.length} users into the database...` : 'No new users to be added to the database.')
-        for (const newUser of newUsers) {
-            User.create({
-                id: uuidv4(),
-                discordId: newUser.id,
-                discordUsername: newUser.username,
-                globalName: newUser.globalName,
-                isBot: newUser.bot,
-                createdBy: user.dataValues.id
-            })
-        }
-        
-        try {
-
-            Guild.create({
-                
-            })
-        } catch (err) {
-            if (err instanceof ValidationError) {
-                console.log(err)
-            } else throw err
-        }
     }
     
     // setup custom slash commands
     client.commands = new Collection();
-    await registerCommandHandlers({ client, commandHandlers });
+    await registerCommandHandlers({ client  });
 
     // set webhook event handlers
     await setupEventHandlers({ client, eventHandlers });

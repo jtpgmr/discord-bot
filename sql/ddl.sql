@@ -3,7 +3,6 @@ create schema if not exists "discordBot";
 create table if not exists "discordBot".users (
 	"serialId" int4 generated always as identity primary key,
 	id uuid not null unique,
-	"discordId" varchar not null,
 	"isBot" bool null default false,
 	"createdAt" timestamptz not null default now(),
 	"createdBy" uuid not null references "discordBot".users(id),
@@ -11,10 +10,22 @@ create table if not exists "discordBot".users (
 	"updatedBy" uuid null references "discordBot".users(id)
 );
 
-create table if not exists "discordBot".guilds (
+
+create table if not exists "discordBot"."platformUser" (
+	 "serialId" int4 generated always as identity primary key,
+	id uuid not null unique,
+	"userId" uuid not null references "discordBot".users(id),
+	"platformId" varchar not null,
+	"platform" int2 not null, -- 1: Discord, 2: Slack
+	"createdAt" timestamptz not null default now(),
+	"createdBy" uuid not null references "discordBot".users(id),
+	unique("userId", "platformId", "platform")
+)
+
+create table if not exists "discordBot".servers (
 	"serialId" int4 generated always as identity primary key,
 	id uuid not null unique,
-	"discordId" varchar not null,
+	"platform" int2 not null,
 	"ownerId" uuid not null references "discordBot".users(id),
 	"name" varchar not null,
 	"createdAt" timestamptz not null default now(),
@@ -31,6 +42,7 @@ create table if not exists "discordBot".commands (
     type int2 not null default 1, -- 1: Chat input, 2: User, 3: Message, 4: primary Entry Point
     nsfw bool null default false,
     disabled bool null default false,
+	"serverId" uuid null references "discordBot".servers(id),
     "callbackSource" varchar null,
 	"createdAt" timestamptz not null default now(),
 	"createdBy" uuid not null references "discordBot".users(id),
@@ -63,6 +75,7 @@ create table if not exists "discordBot"."commandOptions" (
     type int2 not null CHECK (type <> 2), -- cannot be the value of a group command
     required bool null default false,
     disabled bool null default false,
+	choices jsonb null,
 	"createdAt" timestamptz not null default now(),
 	"createdBy" uuid not null references "discordBot".users(id),
 	"updatedAt" timestamptz null,

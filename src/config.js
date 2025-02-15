@@ -1,5 +1,6 @@
 const dotenv = require('@dotenvx/dotenvx');
 const path = require('path');
+const { helpers: { createDbConn } } = require('./utils')
 let dbConfig = require('../db-config.json');
 const aiConfig = require('../ai-config.json');
 
@@ -29,8 +30,10 @@ dbConfig = {
     logging: env === 'DEV' ? console.log : false
 }
 
+const db = createDbConn(dbConfig);
+
 module.exports = {
     discordCreds,
-    dbConfig,
+    db,
     aiConfig
 }

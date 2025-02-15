@@ -1,17 +1,33 @@
 const { MessageFlags, SlashCommandBuilder } = require('discord.js');
+const { constants: { commandOptionTypes }} = require('../utils')
 
-const createSlashCommandDataOption = ({ name, description, type, required, options = [] }) => ({ options, name, description, type, required });
+// based on `interaction.options`
+const defaultMessageFlags = {
+    5: {
+        'private': MessageFlags.Ephemeral
+    }
+}
+
+const createSlashCommandDataOption = ({ name, description, type, required, options = [], choices = [] }) => ({ name, description, choices, options, required, type, });
 
 const createChatInputCommandReply = ({ content = null, embeds = [], flags = [], files = [] }) => ({ content, embeds, flags, files });
 
 const createSlashCommandExecute = async ({ execute, features={} }) => {
+    const flags = [...new Set(features.interaction.options._hoistedOptions.map(opt => {
+        if (!!defaultMessageFlags[opt.type] && !!defaultMessageFlags[opt.type][opt.name]) {
+            const flag = defaultMessageFlags[opt.type][opt.name]
+            if (opt.type === commandOptionTypes.BOOLEAN && opt.value === true) {
+                return flag
+            } 
+        }
+    }))].filter(Number)
+    
+    await features.interaction.deferReply({ flags })
     let response = await execute({ features })
     
     // if no response object is returned by the `execute` function
     if (response == null) {
-        await features.interaction.deferReply()
         await features.interaction.deleteReply()
-        
         return
     }
     
@@ -21,15 +37,15 @@ const createSlashCommandExecute = async ({ execute, features={} }) => {
     
     response = createChatInputCommandReply(response) 
 
-    if (!!response.content && !!(typeof response.content === 'object')) {
-        response.content = Object.entries(response.content).map(([k,v]) => !!v ? `${k}: ${JSON.stringify(v)}` : '').join('\n')
-    }
-                
-    if (!!features.interaction.options.getBoolean('private')) response.flags.push(MessageFlags.Ephemeral)
+    if (!!(typeof response.content === 'object')) {
+        if (!!response.content && typeof response.content === 'object') response.content = Object.entries(response.content).map(([k,v]) => !!v ? `${k}: ${JSON.stringify(v)}` : '').join('\n')
         
+        if (!!response.flags && Array.isArray(response.flags)) [...response.flags, ...flags]
+    }
+
     response.flags = [...new Set(response.flags)]
-            
-    await features.interaction.reply(response)
+    
+    await features.interaction.followUp(response)
 }
 
 // setCommand keys must refer to a method of the classes `SharedNameAndDescription` or `SharedSlashCommand`

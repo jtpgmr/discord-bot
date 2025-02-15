@@ -1,6 +1,4 @@
 const { Client, GatewayIntentBits } = require('discord.js');
-const { helpers: { createDbConn } } = require('../utils')
-const { dbConfig } = require('../config')
 const AIAdapters = require('./ai')
 
 const discord = new Client({
@@ -13,11 +11,7 @@ const discord = new Client({
     ]
 });
 
-const db = createDbConn(dbConfig);
-
-
 module.exports = {
     default: discord,
-    db,
     AIAdapters
 }

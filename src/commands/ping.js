@@ -9,7 +9,7 @@ module.exports = buildCommand({
 			createSlashCommandDataOption({ name: 'private', description: 'Sets ephemeral to true', type: commandOptionTypes.BOOLEAN })
 		],
 	},
-	execute: ({ contentType }) => {
+	execute: () => {
 		return { content: "Pong!" }
 	}
 });

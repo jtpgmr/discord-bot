@@ -1,20 +1,19 @@
-const { aiCategoryEnums, aiCategoryNames } = require('../../utils/constants');
-
+const { aiCategoryEnumToName, aiCategoryNameToEnum } = require('../../utils/constants');
 const { AIAdapters } = require('../../clients')
-const { aiConfig } = require('../../config')
 const { RegisteredAIModel } = require('../../models');
 
-
 const DiscordBotAIAdapters = {}
+const defaultModelNames = {}
 
-const registerAIModels = async () => {
-    Object.keys(aiCategoryEnums).forEach(cat => DiscordBotAIAdapters[cat] = {})
-
-    const dbAIModels = await RegisteredAIModel.findAll({ where: { isActive: true }, raw: true })
+const registerAIModels = async ({ aiConfig }) => {
+    Object.keys(aiCategoryNameToEnum).forEach(cat => DiscordBotAIAdapters[cat] = {})
+    Object.keys(aiCategoryNameToEnum).forEach(cat => defaultModelNames[cat] = '')
     
+    const dbAIModels = await RegisteredAIModel.findAll({ where: { isActive: true }, raw: true, order: [['serialId', 'ASC']] })
     
     dbAIModels.forEach(ai => {
-        const categoryAdapters = DiscordBotAIAdapters[aiCategoryNames[ai.category]];
+        const aiCategory = aiCategoryEnumToName[ai.category]
+        const categoryAdapters = DiscordBotAIAdapters[aiCategory];
         
         // Skip if the category adapter isn't configured
         if (!categoryAdapters) return
@@ -28,16 +27,17 @@ const registerAIModels = async () => {
                 adapterName !== AIAdapter.name || 
                 !config[ai.provider]
             ) return; 
-    
-            categoryAdapters[ai.modelName] = new AIAdapter(config);
+            
+        
+            categoryAdapters[ai.modelName] = new AIAdapter({ ...config[ai.provider], model: ai.modelName, provider: ai.provider });
+
+            if (!defaultModelNames[aiCategory].trim()) defaultModelNames[aiCategory] = ai.modelName 
         });
     });
-}
-
-               
-                    
+}                 
                      
 module.exports = {
     default: DiscordBotAIAdapters,
-    registerAIModels
+    registerAIModels,
+    defaultModelNames
 }

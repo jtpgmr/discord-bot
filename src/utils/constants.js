@@ -21,16 +21,22 @@ const commandOptionTypes = {
 	ATTACHMENT: 11
 }
 
-const aiCategoryEnums = {
-	LLM: 1,
-	TTS: 2,
-	SST: 3
-}
-
 const aiCategoryNames = {
     LLM: "LLM",
     TTS: "TTS",
     SST: "SST"
 }
 
-module.exports = { commandTypes, commandOptionTypes, aiCategoryEnums, aiCategoryNames }
+const aiCategoryNameToEnum  = {
+	LLM: 1,
+	TTS: 2,
+	SST: 3
+}
+
+const aiCategoryEnumToName = {
+    1: "LLM",
+    2: "TTS",
+    3: "SST"
+}
+
+module.exports = { commandTypes, commandOptionTypes, aiCategoryNames, aiCategoryNameToEnum, aiCategoryEnumToName }

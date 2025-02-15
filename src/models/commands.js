@@ -1,6 +1,6 @@
 const { constants: { commandTypes } } = require('../utils');
 const { DataTypes, ValidationError } = require('sequelize');
-const { db } = require('../clients')
+const { db } = require('../config')
 
 const Command = db.define(
     'Command',

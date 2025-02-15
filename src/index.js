@@ -1,21 +1,14 @@
-const { registerAIModels, default: DiscordBotAIAdapters } = require('./events/customFeatures/aiAdapters');
 const ready = require('./events/ready');
-
-const { Collection, PermissionsBitField, TextChannel, VoiceChannel } = require('discord.js');
-
-// const { setupEventHandlers, eventHandlers } = require('./events');
-// const { registerCommandHandlers, commandHandlers } = require('./commands');
-const { discordCreds: { DISCORD_BOT_TOKEN } } = require('./config');
-const { default: discord, db } = require('./clients');
+const { discordCreds: { DISCORD_BOT_TOKEN }, aiConfig } = require('./config');
+const { default: discord } = require('./clients');
 const { Events } = require('discord.js');
-
+const { registerAIModels, default: DiscordBotAIAdapters } = require('./events/customFeatures/aiAdapters');
 
 (async () => {
-    await registerAIModels()
+    await registerAIModels({ aiConfig })
 
     // initialize bot
     await discord.login(DISCORD_BOT_TOKEN)
     
     discord.once(Events.ClientReady, async () => ready({ client: discord }))
-
 })();
