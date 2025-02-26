@@ -12,8 +12,6 @@ const voiceStateUpdate = async ({ client, ...args }) => {
     
     const checkBotUser = currentState.channel.members.get(client.user.id)
     
-    console.log(333, stateUpdateUser.channel.members)
-    
     if (!!checkBotUser && !!stateUpdateUser) {
         // disconnects bot from current channel if they are the only member
         // if (currentState.channel.members.size === 1) {

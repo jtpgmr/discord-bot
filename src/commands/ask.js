@@ -1,5 +1,3 @@
-const { RegisteredAIModel } = require('../models');
-
 const { default: buildCommand, createSlashCommandDataOption } = require('./__commandBuilder__')
 const { constants: { commandOptionTypes }} = require('../utils')
 const { default: DiscordBotAIAdapters, defaultModelNames } = require('../events/customFeatures/aiAdapters');

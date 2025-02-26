@@ -28,7 +28,6 @@ const registerAIModels = async ({ aiConfig }) => {
                 !config[ai.provider]
             ) return; 
             
-        
             categoryAdapters[ai.modelName] = new AIAdapter({ ...config[ai.provider], model: ai.modelName, provider: ai.provider });
 
             if (!defaultModelNames[aiCategory].trim()) defaultModelNames[aiCategory] = ai.modelName 

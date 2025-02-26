@@ -2,7 +2,7 @@ const ready = require('./events/ready');
 const { discordCreds: { DISCORD_BOT_TOKEN }, aiConfig } = require('./config');
 const { default: discord } = require('./clients');
 const { Events } = require('discord.js');
-const { registerAIModels, default: DiscordBotAIAdapters } = require('./events/customFeatures/aiAdapters');
+const { registerAIModels } = require('./events/customFeatures/aiAdapters');
 
 (async () => {
     await registerAIModels({ aiConfig })

@@ -1,9 +1,9 @@
 const { Routes } = require('discord.js');
-const { discordCreds: { DISCORD_BOT_CLIENT_ID, DISCORD_GUILD_ID } } = require('../config');
+const { discordCreds: { DISCORD_BOT_CLIENT_ID } } = require('../config');
 const { constants: { commandTypes } } = require('../utils');
+const { Collection } = require('discord.js');
 const fs = require('fs')
 const path = require('path')
-
 
 class SlashCommandData {
 	constructor({ name, description, type, options, nsfw = false, disabled = false, callbackSource = null }) {
@@ -45,8 +45,9 @@ const compareValues = (value1, value2) => {
     return value1 === value2;
 }
 
-const registerCommandHandlers = async ({ client, }) => {
+const registerCommandHandlers = async ({ client, guild }) => {
 	const commandHandlers = {}
+	const commands = new Collection()
 	
 	fs.readdirSync(__dirname).forEach(file => {
 		const [fileName, ext] = file.split('.')
@@ -71,17 +72,17 @@ const registerCommandHandlers = async ({ client, }) => {
     for (const [key, command] of Object.entries(commandHandlers)) {
         if ('data' in command && 'execute' in command) {
 			const { data, execute } = command
-			client.commands.set(data.name, { data, execute });
+			commands.set(data.name, { data, execute });
 		} else {
 			console.warn(`[WARNING] Command handler with the key "${key}" is missing a required "data" or "execute" property.`);
 		}
     }
 	
-	if (client.commands.size === 0) {
+	if (commands.size === 0) {
 		console.log(`No commands received in commands set. Clearing commands...`);
 		try {			
 			await client.rest.put(
-				Routes.applicationGuildCommands(DISCORD_BOT_CLIENT_ID, DISCORD_GUILD_ID),
+				Routes.applicationGuildCommands(DISCORD_BOT_CLIENT_ID, guild.id),
 				{ body: [] },
 			);
 		} catch (error) {
@@ -91,12 +92,10 @@ const registerCommandHandlers = async ({ client, }) => {
 		return
 	}
 	
-	console.log(`Checking if slash commands (/) commands have changed...`);
-	
-	// const dbSlashCommands = await Command.findAll({ where: { type: commandTypes.CHAT_INPUT }})
-		
+	console.log(`Checking if slash commands (/) commands have changed for ${guild.name} (${guild.id}).`);
+			
 	// current command configuration within the code
-	const codedCommands = Array.from(client.commands, ([key, value]) => (
+	const codedCommands = Array.from(commands, ([key, value]) => (
 		new SlashCommandData({ 
 			...value.data, 
 			name: key, 
@@ -112,7 +111,7 @@ const registerCommandHandlers = async ({ client, }) => {
 	
 	// commands currently configured on Discord's API
 	let existingCommands = await client.rest.get(
-		Routes.applicationGuildCommands(DISCORD_BOT_CLIENT_ID, DISCORD_GUILD_ID),
+		Routes.applicationGuildCommands(DISCORD_BOT_CLIENT_ID, guild.id),
 	);
 	
 	// convert commands on Discord's API to custom class object
@@ -132,7 +131,7 @@ const registerCommandHandlers = async ({ client, }) => {
 			).length === 1
 		).length === codedCommands.length
 	) {
-		console.log('Application `/` command configurations have not changed');
+		console.log(`Application slash command configurations have not changed for ${guild.name} (${guild.id})`);
 		
 		return
 	}
@@ -142,19 +141,16 @@ const registerCommandHandlers = async ({ client, }) => {
 	// register the slash commands to the API
 	try {			
 		await client.rest.put(
-			Routes.applicationGuildCommands(DISCORD_BOT_CLIENT_ID, DISCORD_GUILD_ID),
+			Routes.applicationGuildCommands(DISCORD_BOT_CLIENT_ID, guild.id),
 			{ body: codedCommands },
 		);
 	} catch (error) {
 		console.error(error);
 	}
 	
-
-	
-	console.log('Successfully reloaded application `/` commands.');
+	console.log(`Successfully reloaded application "/" commands for ${guild.name} (${guild.id})`);
 };
 
 module.exports = {
 	registerCommandHandlers,
-	// commandHandlers,
 };

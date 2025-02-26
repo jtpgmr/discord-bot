@@ -39,6 +39,11 @@ const Command = db.define(
             type: DataTypes.BOOLEAN,
             defaultValue: false
         },
+        serverId: {
+            type: DataTypes.UUIDV4,
+            allowNull: false,
+            references: { model: "Server", key: "id" }
+        },
         callbackSource: { type: DataTypes.STRING },
         createdAt: {
             type: DataTypes.DATE,
@@ -62,7 +67,7 @@ const Command = db.define(
         },
     },
     {
-        schema: 'discordBot',
+        schema: 'chatBot',
         tableName: 'commands',
         timestamps: false
     },
@@ -121,7 +126,7 @@ const SubGroupCommand = db.define(
         },
     },
     {
-        schema: 'discordBot',
+        schema: 'chatBot',
         tableName: 'subGroupCommands',
         timestamps: false,
         indexes: [{  unique: true, fields: ['commandId', 'name'] }]
@@ -177,6 +182,9 @@ const CommandOption = db.define(
             type: DataTypes.BOOLEAN,
             defaultValue: false
         },
+        choices: {
+            type: DataTypes.JSONB
+        },
         createdAt: {
             type: DataTypes.DATE,
             allowNull: false,
@@ -198,7 +206,7 @@ const CommandOption = db.define(
         },
     },
     {
-        schema: 'discordBot',
+        schema: 'chatBot',
         tableName: 'commandOptions',
         timestamps: false,
         indexes: [{  

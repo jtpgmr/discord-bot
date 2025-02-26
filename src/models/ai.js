@@ -57,7 +57,7 @@ const RegisteredAIModel = db.define(
         },
     },
     {
-        schema: 'discordBot',
+        schema: 'chatBot',
         tableName: 'registeredAIModels',
         timestamps: false,
         indexes: [{  

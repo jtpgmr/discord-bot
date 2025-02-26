@@ -9,12 +9,12 @@ module.exports = buildCommand({
 		description: 'Add bot to voice channel on command', 
 	},
 	customFeatures: { discord },
-	execute: async ({ features }) => {
-		const { discord, interaction } = features
+	execute: async ({ interaction, features }) => {
+		const { discord: client } = features
 
 		if (!(interaction.channel instanceof VoiceChannel)) {
 			return {
-				content: "`/summon` command failed because the channel " + "**" + interaction.channel.name + "**" + " is not a Voice Channel. " + "\n\n" + userMention(discord.user.id) + " failed to join.",
+				content: "`/summon` command failed because the channel " + "**" + interaction.channel.name + "**" + " is not a Voice Channel. " + "\n\n" + userMention(client.user.id) + " failed to join.",
 				flags: [MessageFlags.Ephemeral]
 			}
 		}

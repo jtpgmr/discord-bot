@@ -7,7 +7,8 @@ const discord = new Client({
         GatewayIntentBits.GuildPresences, // View Member Statuses
         GatewayIntentBits.GuildMembers, // Add Members
         GatewayIntentBits.GuildVoiceStates,
-        GatewayIntentBits.GuildMembers
+        GatewayIntentBits.GuildMembers,
+        GatewayIntentBits.GuildInvites
     ]
 });
 

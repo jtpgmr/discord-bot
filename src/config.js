@@ -35,5 +35,6 @@ const db = createDbConn(dbConfig);
 module.exports = {
     discordCreds,
     db,
-    aiConfig
+    aiConfig,
+    projectDirName
 }

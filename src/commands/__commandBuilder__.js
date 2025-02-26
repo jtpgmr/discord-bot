@@ -12,8 +12,8 @@ const createSlashCommandDataOption = ({ name, description, type, required, optio
 
 const createChatInputCommandReply = ({ content = null, embeds = [], flags = [], files = [] }) => ({ content, embeds, flags, files });
 
-const createSlashCommandExecute = async ({ execute, features={} }) => {
-    const flags = [...new Set(features.interaction.options._hoistedOptions.map(opt => {
+const createSlashCommandExecute = async ({ execute, interaction, features={} }) => {
+    const flags = [...new Set(interaction.options._hoistedOptions.map(opt => {
         if (!!defaultMessageFlags[opt.type] && !!defaultMessageFlags[opt.type][opt.name]) {
             const flag = defaultMessageFlags[opt.type][opt.name]
             if (opt.type === commandOptionTypes.BOOLEAN && opt.value === true) {
@@ -22,12 +22,12 @@ const createSlashCommandExecute = async ({ execute, features={} }) => {
         }
     }))].filter(Number)
     
-    await features.interaction.deferReply({ flags })
-    let response = await execute({ features })
+    await interaction.deferReply({ flags })
+    let response = await execute({ interaction, features })
     
     // if no response object is returned by the `execute` function
     if (response == null) {
-        await features.interaction.deleteReply()
+        await interaction.deleteReply()
         return
     }
     
@@ -45,7 +45,7 @@ const createSlashCommandExecute = async ({ execute, features={} }) => {
 
     response.flags = [...new Set(response.flags)]
     
-    await features.interaction.followUp(response)
+    await interaction.followUp(response)
 }
 
 // setCommand keys must refer to a method of the classes `SharedNameAndDescription` or `SharedSlashCommand`
@@ -71,11 +71,13 @@ const buildCommand = ({ data, execute, customFeatures = {}, overrideDefaultExecu
         if (Boolean(a.required) < Boolean(b.required)) return 1
         return 0
     })
-        
+
     return {
         data: createSlashCommandData(data),
         // TODO: Test behavior
-        execute: !!overrideDefaultExecute ? async features => execute({ features: { ...features, ...customFeatures} }) : async features => createSlashCommandExecute({ execute, features: { ...features, ...customFeatures} })
+        execute: !!overrideDefaultExecute 
+            ? async ({ interaction, ...features }) => execute({ interaction, features: { ...features, ...customFeatures } })  
+            : async ({ interaction, ...features }) => createSlashCommandExecute({ execute, interaction, features: { ...features, ...customFeatures } })
     }
 }
 

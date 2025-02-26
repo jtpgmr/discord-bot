@@ -19,10 +19,7 @@ RUN npm install -g npm@10.8
 RUN npm install --save
 
 # Remove SSH key file, if found
-RUN rm -rf ~/.ssh/id_ed25519_sk
-
-# Tells Docker the port that the application (server) is listening on
-EXPOSE 9000
+RUN rm -rf ~/.ssh/deployments_private_key
 
 # CMD specifies commands that should be ran at runtime (when an instance has started)
 CMD ["npm", "run", "start"]
