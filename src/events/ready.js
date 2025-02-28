@@ -76,9 +76,6 @@ const ready = async ({ client }) => {
                 createdAt
             })
             
-            
-            
-            
             await ServerUser.bulkCreate(serverUsers.map(u => ({
                 id: uuidv4(),
                 userId: u.id,
@@ -89,13 +86,11 @@ const ready = async ({ client }) => {
         }
         
         // const readyMessage = `Bot "${botName}" is now active and listening...`
-        await registerCommandHandlers({ client, guild: appGuild });
+        await registerCommandHandlers({ client, dbServer, dbBotUser });
 
         // set webhook event handlers
         await setupEventHandlers({ client, eventHandlers, guild: appGuild });
     }
-    
-
     
     client.user.setPresence({
         activities: [{ name: 'Use /invite to add me!', type: ActivityType.Watching }], // Type 3 = Watching

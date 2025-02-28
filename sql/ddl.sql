@@ -38,7 +38,7 @@ create table if not exists "chatBot"."serverUsers" (
 create table if not exists "chatBot".commands (
     "serialId" int4 generated always as identity primary key,
     id uuid not null unique,
-    name varchar not null unique,
+    name varchar not null,
     description varchar null,
     type int2 not null default 1, -- 1: Chat input, 2: User, 3: Message, 4: primary Entry Point
     nsfw bool null default false,
@@ -48,7 +48,8 @@ create table if not exists "chatBot".commands (
 	"createdAt" timestamptz not null default now(),
 	"createdBy" uuid not null references "chatBot".users(id),
 	"updatedAt" timestamptz null,
-	"updatedBy" uuid null references "chatBot".users(id)
+	"updatedBy" uuid null references "chatBot".users(id),
+	unique("serverId", name)
 );
 
 create table if not exists "chatBot"."subGroupCommands" (
@@ -149,6 +150,59 @@ as
 		u."updatedAt",
 		u."updatedBy"
 ;
+
+create or replace view 
+	"chatBot"."serverSummary"
+as
+	select 
+		s."serialId",
+		s.id,
+		s."name",
+		s."platformId",
+		s.platform,
+		s."createdAt",
+		s."createdBy",
+		s."updatedAt",
+		s."updatedBy",
+		case 
+			when 
+				count(distinct s.id) = 0 then '[]'::jsonb 
+			else 
+				jsonb_agg(
+					distinct jsonb_build_object(
+						'id', u."id",
+						'name', u."platformId",
+						'isOwner', case when s."ownerId" = u.id then true else false end,
+						'createdAt', replace(to_char(u."createdAt" at time zone 'utc', 'YYYY-MM-DDT HH:MI:SS.MSZ'), ' ', ''),
+						'updatedAt', u."updatedAt"
+					)
+				)
+		end members
+--		,case 
+--			
+--		end commands
+	from 
+		"chatBot".servers s
+	left join 
+		"chatBot"."serverUsers" su
+	on 
+		su."serverId" = s."id" 
+	left join 
+		"chatBot"."users" u
+	on 
+		su."userId" = u."id"
+	group by
+		s."serialId",
+		s.id,
+		s."name",
+		s."platformId",
+		s.platform,
+		s."createdAt",
+		s."createdBy",
+		s."updatedAt",
+		s."updatedBy"
+;
+
 
 create user "" with password '';
 grant usage on schema "chatBot" to "";

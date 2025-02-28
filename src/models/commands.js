@@ -20,8 +20,7 @@ const Command = db.define(
         },
         name: {
             type: DataTypes.STRING,
-            allowNull: false,
-            unique: true
+            allowNull: false
         },
         description: {
             type: DataTypes.STRING,
@@ -69,7 +68,8 @@ const Command = db.define(
     {
         schema: 'chatBot',
         tableName: 'commands',
-        timestamps: false
+        timestamps: false,
+        indexes: [{  unique: true, fields: ['serverId', 'name'] }]
     },
 );
 
@@ -157,7 +157,6 @@ const CommandOption = db.define(
         },
         subGroupCommandId: {
             type: DataTypes.UUIDV4,
-            allowNull: false,
             references: { model: "SubGroupCommand", key: "id" }
         },
         name: {

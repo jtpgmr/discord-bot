@@ -9,7 +9,8 @@ COPY ./ ./
 RUN mkdir ~/.ssh/
 RUN mv deployments_private_key ~/.ssh/deployments_private_key
 RUN chmod 600 ~/.ssh/deployments_private_key
-RUN mv dbCreds.json ./dbCreds.json
+RUN mv db-config.json ./db-config.json
+RUN mv ai-config.json ./ai-config.json
 
 # Necessary packages
 RUN apk add git openssh

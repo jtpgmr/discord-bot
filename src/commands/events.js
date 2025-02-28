@@ -10,7 +10,7 @@ module.exports = buildCommand({
 		options: [
 			createSlashCommandDataOption({ 
                 name: 'ics', 
-                description: 'f', 
+                description: 'g', 
                 type: commandOptionTypes.SUB_COMMAND_GROUP,
                 options: [
                     createSlashCommandDataOption({ ...ping.data, type: commandOptionTypes.SUB_COMMAND }),
@@ -21,5 +21,6 @@ module.exports = buildCommand({
 	},
 	execute: ({ contentType }) => {
 		// return { content: "Pong!" }
+		return "Pong"
 	}
 });
