@@ -4,9 +4,9 @@ const { constants: { commandTypes } } = require('../utils');
 const { Collection } = require('discord.js');
 const fs = require('fs')
 const path = require('path')
-const { Command, CommandOption, SubGroupCommand } = require('../models')
+const { SubCommand, SubCommandGroup, SubCommandOption } = require('../models')
 const { v4: uuidv4 } = require('uuid')
-const { commandOptionTypes } = require('../utils/constants')
+const { subCommandOptionTypes } = require('../utils/constants')
 
 class SlashCommandData {
 	constructor({ name, description, type, options, nsfw = false, disabled = false, callbackSource = null }) {
@@ -146,7 +146,7 @@ const registerCommandHandlers = async ({ client, dbServer, dbBotUser }) => {
 	}
 	
 	try {
-		const dbCommands = await Command.findAll({ where: { serverId: dbServer.id }, raw: true })
+		const dbCommands = await SubCommand.findAll({ where: { serverId: dbServer.id }, raw: true })
 		
 		for (const uC of unregisteredCommandChanges) {
 			const existingCommand = dbCommands.find(c => c.name === uC.name)
@@ -154,7 +154,7 @@ const registerCommandHandlers = async ({ client, dbServer, dbBotUser }) => {
 			const now = new Date()
 
 			if (!existingCommand) {
-				const newDbCommand = await Command.create({
+				const newDbCommand = await SubCommand.create({
 					...uC,
 					id: uuidv4(),
 					serverId: dbServer.id, 
@@ -164,29 +164,36 @@ const registerCommandHandlers = async ({ client, dbServer, dbBotUser }) => {
 				
 				
 				for (const commandOpt of (uC.options || [])) {
-					let newGroupSubCommand= null
-					console.log(commandOpt.name)
-					if (commandOpt.type === commandOptionTypes.SUB_COMMAND_GROUP) {
-						newGroupSubCommand = await SubGroupCommand.create({
+					let newSubCommandGroup = null
+					
+					if (commandOpt.type === subCommandOptionTypes.SUB_COMMAND_GROUP) {
+						newSubCommandGroup = await SubCommandGroup.create({
 							...commandOpt,
 							id: uuidv4(),
-							commandId: newDbCommand.id,
+							subCommandId: newDbCommand.id,
 							createdAt: now,
 							createdBy: dbBotUser.id,
 						})
-						
-					}
+					} 
 					
-					
-					for (const opt of (commandOpt.options || [])) {
-						await CommandOption.create({
-							...opt,
-							id: uuidv4(),
-							commandId: newDbCommand.id,
-							subGroupCommandId: !newGroupSubCommand ? null : newGroupSubCommand.id,
-							createdAt: now,
-							createdBy: dbBotUser.id,
-						})
+					if (!!newSubCommandGroup) {
+						console.log(333, commandOpt)
+						for (const opt of (commandOpt.options || [])) {
+							
+						}
+						// for (const opt of (commandOpt.options || [])) 
+					} else {
+						for (const opt of (commandOpt.options || [])) {
+							console.log(555, opt)
+							await SubCommandOption.create({
+								...opt,
+								id: uuidv4(),
+								subCommandId: newDbCommand.id,
+								// subCommandGroupId: !newSubCommandGroup ? null : newSubCommandGroup.id,
+								createdAt: now,
+								createdBy: dbBotUser.id,
+							})
+						}
 					}
 				}
 			} else {
@@ -195,7 +202,7 @@ const registerCommandHandlers = async ({ client, dbServer, dbBotUser }) => {
 				fieldsToExclude.forEach(f => delete existingCommand[f] )
 				if (!compareValues({ ...existingCommand, id: undefined, serverId: undefined, options: undefined }, { ...uC, options: undefined })) {
 					console.log
-					await Command.update({
+					await SubCommand.update({
 						...uC, 
 						updatedAt: now,
 						updatedBy: dbBotUser.id,
@@ -211,9 +218,9 @@ const registerCommandHandlers = async ({ client, dbServer, dbBotUser }) => {
 		}
 
 		
-		const dbSubGroupCommands = await SubGroupCommand.findAll({ where: { commandId: dbCommands.map(c => c.id) }})
+		const dbSubGroupCommands = await SubCommandGroup.findAll({ where: { subCommandId: dbCommands.map(c => c.id) }})
 		
-		const dbCommandOptions = await SubGroupCommand.findAll({ where: { commandId: dbCommands.map(c => c.id) }})
+		const dbCommandOptions = await SubCommandGroup.findAll({ where: { subCommandId: dbCommands.map(c => c.id) }})
 		
 
 	} catch (err) {

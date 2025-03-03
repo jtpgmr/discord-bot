@@ -2,8 +2,8 @@ const { constants: { commandTypes } } = require('../utils');
 const { DataTypes, ValidationError } = require('sequelize');
 const { db } = require('../config')
 
-const Command = db.define(
-    'Command',
+const SubCommand = db.define(
+    'SubCommand',
     {
         serialId: {
             type: DataTypes.INTEGER,
@@ -67,15 +67,15 @@ const Command = db.define(
     },
     {
         schema: 'chatBot',
-        tableName: 'commands',
+        tableName: 'subCommands',
         timestamps: false,
         indexes: [{  unique: true, fields: ['serverId', 'name'] }]
     },
 );
 
 
-const SubGroupCommand = db.define(
-    'SubGroupCommand',
+const SubCommandGroup = db.define(
+    'SubCommandGroup',
     {
         serialId: {
             type: DataTypes.INTEGER,
@@ -90,10 +90,10 @@ const SubGroupCommand = db.define(
             allowNull: false,
             unique: true
         },
-        commandId: {
+        subCommandId: {
             type: DataTypes.UUIDV4,
             allowNull: false,
-            references: { model: "Command", key: "id" }
+            references: { model: "SubCommand", key: "id" }
         },
         name: {
             type: DataTypes.STRING,
@@ -127,15 +127,15 @@ const SubGroupCommand = db.define(
     },
     {
         schema: 'chatBot',
-        tableName: 'subGroupCommands',
+        tableName: 'subCommandGroups',
         timestamps: false,
-        indexes: [{  unique: true, fields: ['commandId', 'name'] }]
+        indexes: [{  unique: true, fields: ['subCommandId', 'name'] }]
     },
 );
 
 
-const CommandOption = db.define(
-    'CommandOption',
+const SubCommandOption = db.define(
+    'SubCommandOption',
     {
         serialId: {
             type: DataTypes.INTEGER,
@@ -150,14 +150,14 @@ const CommandOption = db.define(
             allowNull: false,
             unique: true
         },
-        commandId: {
+        subCommandId: {
             type: DataTypes.UUIDV4,
             allowNull: false,
-            references: { model: "Command", key: "id" }
+            references: { model: "SubCommand", key: "id" }
         },
-        subGroupCommandId: {
+        subCommandGroupId: {
             type: DataTypes.UUIDV4,
-            references: { model: "SubGroupCommand", key: "id" }
+            references: { model: "SubCommandGroup", key: "id" }
         },
         name: {
             type: DataTypes.STRING,
@@ -168,8 +168,8 @@ const CommandOption = db.define(
             type: DataTypes.SMALLINT,
             allowNull: false,
             validate: {
-                isNotSubGroupCommand(val) {
-                    if (val == 2) throw new ValidationError('"type" value of "2" received. Please refer to creating a sub group command.')
+                isNotSubCommandGroup(val) {
+                    if (val === 2) throw new ValidationError('"type" value of "2" received. Please refer to creating a sub group command.')
                 }
             }
         },
@@ -206,13 +206,13 @@ const CommandOption = db.define(
     },
     {
         schema: 'chatBot',
-        tableName: 'commandOptions',
+        tableName: 'subCommandOptions',
         timestamps: false,
         indexes: [{  
             unique: true, 
-            fields: ['commandId', 'subGroupCommandId', 'name'] 
+            fields: ['subCommandId', 'subCommandGroupId', 'name'] 
         }]
     },
 );
 
-module.exports = { Command, SubGroupCommand,  CommandOption }
+module.exports = { SubCommand, SubCommandGroup,  SubCommandOption }

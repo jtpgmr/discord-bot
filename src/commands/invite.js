@@ -1,5 +1,5 @@
 const { default: buildCommand, createSlashCommandDataOption } = require('./__commandBuilder__')
-const { constants: { commandOptionTypes }} = require('../utils')
+const { constants: { subCommandOptionTypes }} = require('../utils')
 const { discordCreds: { DISCORD_BOT_CLIENT_ID } } = require('../config');
 
 module.exports = buildCommand({
@@ -7,7 +7,7 @@ module.exports = buildCommand({
 		name: 'invite', 
 		description: 'Outputs the link to invite the bot to a server', 
 		options: [
-			createSlashCommandDataOption({ name: 'private', description: 'Sets ephemeral to true', type: commandOptionTypes.BOOLEAN })
+			createSlashCommandDataOption({ name: 'private', description: 'Sets ephemeral to true', type: subCommandOptionTypes.BOOLEAN })
 		],
 	},
 	execute: () => {

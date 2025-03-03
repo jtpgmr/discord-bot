@@ -1,5 +1,5 @@
 const { default: buildCommand, createSlashCommandDataOption } = require('./__commandBuilder__')
-const { constants: { commandOptionTypes }} = require('../utils')
+const { constants: { subCommandOptionTypes }} = require('../utils')
 const { default: DiscordBotAIAdapters, defaultModelNames } = require('../events/customFeatures/aiAdapters');
 const { aiCategoryNames } = require('../utils/constants');
 
@@ -10,13 +10,13 @@ module.exports = buildCommand({
 		name: 'ask', 
 		description: 'Have a threaded conversation with ChatGPT', 
 		options: [
-            createSlashCommandDataOption({ name: 'private', description: 'Sets ephemeral to true', type: commandOptionTypes.BOOLEAN }),	
-            createSlashCommandDataOption({ name: 'prompt', description: 'Prompt given to ChatGPT', type: commandOptionTypes.STRING, required: true }),
+            createSlashCommandDataOption({ name: 'private', description: 'Sets ephemeral to true', type: subCommandOptionTypes.BOOLEAN }),	
+            createSlashCommandDataOption({ name: 'prompt', description: 'Prompt given to ChatGPT', type: subCommandOptionTypes.STRING, required: true }),
 			createSlashCommandDataOption({ 
 				name: 'ai-model', 
 				description: 'Choose an LLM model', 
 				// required: true, 
-				type: commandOptionTypes.STRING, 
+				type: subCommandOptionTypes.STRING, 
 				choices: Object.entries(LLMAdaptors).map(([modelName, Adapter]) => ({ 
 					name: `${Adapter.provider} (${modelName})`, 
 					value: modelName  

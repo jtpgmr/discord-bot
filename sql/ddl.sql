@@ -35,7 +35,7 @@ create table if not exists "chatBot"."serverUsers" (
 	unique("userId", "serverId")
 );
 
-create table if not exists "chatBot".commands (
+create table if not exists "chatBot"."subCommands" (
     "serialId" int4 generated always as identity primary key,
     id uuid not null unique,
     name varchar not null,
@@ -52,10 +52,10 @@ create table if not exists "chatBot".commands (
 	unique("serverId", name)
 );
 
-create table if not exists "chatBot"."subGroupCommands" (
+create table if not exists "chatBot"."subCommandGroups" (
     "serialId" int4 generated always as identity primary key,
     id uuid not null unique,
-    "commandId" uuid not null references "chatBot".commands(id),
+    "subCommandId" uuid not null references "chatBot"."subCommands"(id),
     name varchar not null,
     description varchar null,
     disabled bool null default false,
@@ -63,15 +63,31 @@ create table if not exists "chatBot"."subGroupCommands" (
 	"createdBy" uuid not null references "chatBot".users(id),
 	"updatedAt" timestamptz null,
 	"updatedBy" uuid null references "chatBot".users(id),
-	unique("commandId", name)
+	unique("subCommandId", name)
+);
+
+-- new
+create table if not exists "chatBot"."subCommandGroupCommands" (
+    "serialId" int4 generated always as identity primary key,
+    id uuid not null unique,
+    "subCommandGroupId" uuid not null references "chatBot"."subCommandGroups"(id),
+    name varchar not null,
+    description varchar null,
+    disabled bool null default false,
+	"createdAt" timestamptz not null default now(),
+	"createdBy" uuid not null references "chatBot".users(id),
+	"updatedAt" timestamptz null,
+	"updatedBy" uuid null references "chatBot".users(id),
+	unique("subCommandId", name)
 );
 
 -- https://discord.js.org/docs/packages/discord.js/main/CommandInteractionOptionResolver:Class
-create table if not exists "chatBot"."commandOptions" (
+create table if not exists "chatBot"."subCommandOptions" (
     "serialId" int4 generated always as identity primary key,
     id uuid not null unique,
-    "commandId" uuid not null references "chatBot".commands(id),
-	"subGroupCommandId" uuid null references "chatBot"."subGroupCommands"(id),
+    "subCommandId" uuid not null references "chatBot"."subCommands"(id),
+--	"subCommandGroupId" uuid null references "chatBot"."subCommandGroups"(id),
+    "subCommandGroupId" uuid null references "chatBot"."subCommandGroups"(id), -- update here
     name varchar not null,
     description varchar null,
     type int2 not null CHECK (type <> 2), -- cannot be the value of a group command
@@ -82,8 +98,9 @@ create table if not exists "chatBot"."commandOptions" (
 	"createdBy" uuid not null references "chatBot".users(id),
 	"updatedAt" timestamptz null,
 	"updatedBy" uuid null references "chatBot".users(id),
-	unique("commandId", "subGroupCommandId", name)
+	unique("subCommandId", "subCommandGroupId", name)
 );
+
 
 -- https://discord.js.org/docs/packages/discord.js/main/CommandInteractionOptionResolver:Class
 create table if not exists "chatBot"."registeredAIModels" (

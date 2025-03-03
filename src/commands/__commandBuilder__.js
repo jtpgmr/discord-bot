@@ -1,5 +1,5 @@
 const { MessageFlags, SlashCommandBuilder } = require('discord.js');
-const { constants: { commandOptionTypes }} = require('../utils')
+const { constants: { subCommandOptionTypes }} = require('../utils')
 
 // based on `interaction.options`
 const defaultMessageFlags = {
@@ -16,7 +16,7 @@ const createSlashCommandExecute = async ({ execute, interaction, features={} }) 
     const flags = [...new Set(interaction.options._hoistedOptions.map(opt => {
         if (!!defaultMessageFlags[opt.type] && !!defaultMessageFlags[opt.type][opt.name]) {
             const flag = defaultMessageFlags[opt.type][opt.name]
-            if (opt.type === commandOptionTypes.BOOLEAN && opt.value === true) {
+            if (opt.type === subCommandOptionTypes.BOOLEAN && opt.value === true) {
                 return flag
             } 
         }

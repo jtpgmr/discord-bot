@@ -7,7 +7,7 @@ const commandTypes = {
 }
 
 // https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-type
-const commandOptionTypes = {
+const subCommandOptionTypes = {
 	SUB_COMMAND: 1,
 	SUB_COMMAND_GROUP: 2,
 	STRING: 3,
@@ -39,4 +39,4 @@ const aiCategoryEnumToName = {
     3: "SST"
 }
 
-module.exports = { commandTypes, commandOptionTypes, aiCategoryNames, aiCategoryNameToEnum, aiCategoryEnumToName }
+module.exports = { commandTypes, subCommandOptionTypes, aiCategoryNames, aiCategoryNameToEnum, aiCategoryEnumToName }

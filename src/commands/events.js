@@ -1,6 +1,6 @@
 const { MessageFlags } = require('discord.js')
 const { default: buildCommand, createSlashCommandDataOption } = require('./__commandBuilder__')
-const { constants: { commandOptionTypes }} = require('../utils')
+const { constants: { subCommandOptionTypes }} = require('../utils')
 const ping = require('./ping')
 
 module.exports = buildCommand({
@@ -11,10 +11,10 @@ module.exports = buildCommand({
 			createSlashCommandDataOption({ 
                 name: 'ics', 
                 description: 'g', 
-                type: commandOptionTypes.SUB_COMMAND_GROUP,
+                type: subCommandOptionTypes.SUB_COMMAND_GROUP,
                 options: [
-                    createSlashCommandDataOption({ ...ping.data, type: commandOptionTypes.SUB_COMMAND }),
-                    createSlashCommandDataOption({ ...ping.data, type: commandOptionTypes.SUB_COMMAND, name: 'pong' })
+                    createSlashCommandDataOption({ ...ping.data, type: subCommandOptionTypes.SUB_COMMAND }),
+                    createSlashCommandDataOption({ ...ping.data, type: subCommandOptionTypes.SUB_COMMAND, name: 'pong' })
                 ]
             })
 		],
