@@ -12,9 +12,10 @@ module.exports = buildCommand({
                 name: 'ics', 
                 description: 'g', 
                 type: subCommandOptionTypes.SUB_COMMAND_GROUP,
+				// SUB_COMMAND_GROUP options cannot have other SUB_COMMAND_GROUP options nested within them (as per Discord)
                 options: [
                     createSlashCommandDataOption({ ...ping.data, type: subCommandOptionTypes.SUB_COMMAND }),
-                    createSlashCommandDataOption({ ...ping.data, type: subCommandOptionTypes.SUB_COMMAND, name: 'pong' })
+                    createSlashCommandDataOption({ ...ping.data, type: subCommandOptionTypes.SUB_COMMAND, name: 'pong' }),
                 ]
             })
 		],

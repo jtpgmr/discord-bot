@@ -73,7 +73,6 @@ const SubCommand = db.define(
     },
 );
 
-
 const SubCommandGroup = db.define(
     'SubCommandGroup',
     {
@@ -133,6 +132,64 @@ const SubCommandGroup = db.define(
     },
 );
 
+const SubCommandGroupCommand = db.define(
+    'SubCommandGroupCommand',
+    {
+        serialId: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            primaryKey: true,
+            autoIncrement: true,
+            autoIncrementIdentity: true,
+            unique: true,
+        },
+        id: {
+            type: DataTypes.UUIDV4,
+            allowNull: false,
+            unique: true
+        },
+        subCommandGroupId: {
+            type: DataTypes.UUIDV4,
+            allowNull: false,
+            references: { model: "SubCommandGroup", key: "id" }
+        },
+        name: {
+            type: DataTypes.STRING,
+            allowNull: false,
+        },
+        description: { type: DataTypes.STRING },
+        disabled: {
+            type: DataTypes.BOOLEAN,
+            defaultValue: false
+        },
+        createdAt: {
+            type: DataTypes.DATE,
+            allowNull: false,
+            defaultValue: DataTypes.NOW()
+        },
+        createdBy: {
+            type: DataTypes.UUIDV4,
+            allowNull: false,
+            references: { model: "User", key: "id" }
+
+        },
+        updatedAt: {
+            type: DataTypes.DATE,
+            allowNull: true,
+        },
+        updatedBy: {
+            type: DataTypes.UUIDV4,
+            allowNull: true,
+            references: { model: "User", key: "id" }
+        },
+    },
+    {
+        schema: 'chatBot',
+        tableName: 'subCommandGroupCommands',
+        timestamps: false,
+        indexes: [{  unique: true, fields: ['subCommandId', 'name'] }]
+    },
+);
 
 const SubCommandOption = db.define(
     'SubCommandOption',
@@ -155,9 +212,9 @@ const SubCommandOption = db.define(
             allowNull: false,
             references: { model: "SubCommand", key: "id" }
         },
-        subCommandGroupId: {
+        subCommandGroupCommandId: {
             type: DataTypes.UUIDV4,
-            references: { model: "SubCommandGroup", key: "id" }
+            references: { model: "SubCommandGroupCommand", key: "id" }
         },
         name: {
             type: DataTypes.STRING,
@@ -210,9 +267,9 @@ const SubCommandOption = db.define(
         timestamps: false,
         indexes: [{  
             unique: true, 
-            fields: ['subCommandId', 'subCommandGroupId', 'name'] 
+            fields: ['subCommandId', 'subCommandGroupCommandId', 'name'] 
         }]
     },
 );
 
-module.exports = { SubCommand, SubCommandGroup,  SubCommandOption }
+module.exports = { SubCommand, SubCommandGroup, SubCommandGroupCommand, SubCommandOption }

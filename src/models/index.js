@@ -1,5 +1,5 @@
 const { RegisteredAIModel } = require('./ai')
-const { SubCommand, SubCommandGroup,  SubCommandOption } = require('./commands');
+const { SubCommand, SubCommandGroup, SubCommandGroupCommand, SubCommandOption } = require('./commands');
 const { User, Server, UserSummary,ServerUser } = require('./servers');
 
 module.exports = {
@@ -7,6 +7,7 @@ module.exports = {
     
     SubCommand,
     SubCommandGroup,
+    SubCommandGroupCommand,
     SubCommandOption,
     
     Server,

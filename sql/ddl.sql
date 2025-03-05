@@ -86,8 +86,7 @@ create table if not exists "chatBot"."subCommandOptions" (
     "serialId" int4 generated always as identity primary key,
     id uuid not null unique,
     "subCommandId" uuid not null references "chatBot"."subCommands"(id),
---	"subCommandGroupId" uuid null references "chatBot"."subCommandGroups"(id),
-    "subCommandGroupId" uuid null references "chatBot"."subCommandGroups"(id), -- update here
+    "subCommandGroupId" uuid null references "chatBot"."subCommandGroups"(id),
     name varchar not null,
     description varchar null,
     type int2 not null CHECK (type <> 2), -- cannot be the value of a group command
