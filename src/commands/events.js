@@ -10,7 +10,7 @@ module.exports = buildCommand({
 		options: [
 			createSlashCommandDataOption({ 
                 name: 'ics', 
-                description: 'g', 
+                description: 'test', 
                 type: subCommandOptionTypes.SUB_COMMAND_GROUP,
 				// SUB_COMMAND_GROUP options cannot have other SUB_COMMAND_GROUP options nested within them (as per Discord)
                 options: [

@@ -55,6 +55,205 @@ const recursivelyAppendOptions = (options) => {
     return options.map(opt => new SlashCommandDataOption({ ...opt, options: recursivelyAppendOptions(opt.options) }));
 }
 
+const processSubCommandGroupCommands = async ({ dbBotUser, subCommandId, subCommandGroupId, groupCommands }) => {
+    const existingGroupCommands = await SubCommandGroupCommand.findAll({
+        where: { subCommandGroupId },
+    });
+
+    const existingGroupCommandMap = new Map(existingGroupCommands.map(cmd => [cmd.name, cmd]));
+    const incomingGroupCommandNames = new Set(groupCommands.map(opt => opt.name));
+
+    const groupCommandsToDelete = existingGroupCommands.filter(cmd => !incomingGroupCommandNames.has(cmd.name))
+    if (groupCommandsToDelete.length > 0) {
+        await SubCommandGroupCommand.destroy({ where: { id: groupCommandsToDelete.map(cmd => cmd.id) } })
+    }
+
+    await Promise.all(groupCommands.map(async groupCommand => {
+		let dbGroupCommand = existingGroupCommandMap.get(groupCommand.name);
+
+		if (!!dbGroupCommand) {
+			if (!compareValues(dbGroupCommand, groupCommand)) {
+				await SubCommandGroupCommand.update({
+						description: groupCommand.description,
+						updatedAt: new Date(),
+						updatedBy: dbBotUser.id,
+					},
+					{ where: { id: dbGroupCommand.id } }
+				);
+			}
+		} else {
+			await SubCommandGroupCommand.create({
+				...groupCommand,
+				id: uuidv4(),
+				subCommandGroupId,
+				createdAt: new Date(),
+				createdBy: dbBotUser.id,
+			});
+		}
+		
+		await Promise.all(
+			(groupCommand.options || []).map(async commandOpt => {
+				if (commandOpt.type === subCommandOptionTypes.SUB_COMMAND_GROUP) {
+					throw new Error()
+				} else {
+					await processSubCommandOptions({ dbBotUser, subCommandId: subCommandId, subCommandGroupCommandId: dbGroupCommand.id, options: ([commandOpt] || []) });
+				}
+			})
+		);
+    }));
+};
+
+const processSubCommandOptions = async ({ dbBotUser, subCommandId, subCommandGroupCommandId = null, options }) => {
+    const existingOptions = await SubCommandOption.findAll({ where: { subCommandId, subCommandGroupCommandId } })
+
+    const optionMap = new Map(existingOptions.map(opt => [opt.name, opt]));
+    const incomingOptionNames = new Set(options.map(opt => opt.name));
+
+    const optionsToDelete = existingOptions.filter(opt => !incomingOptionNames.has(opt.name))
+	
+    if (optionsToDelete.length > 0) {
+        await SubCommandOption.destroy({ where: { id: optionsToDelete.map(opt => opt.id) } })
+    }
+
+    await Promise.all(options.map(async (opt) => {
+		const existingOption = optionMap.get(opt.name);
+
+		if (existingOption) {
+			if (!compareValues(existingOption, opt)) {
+				await SubCommandOption.update({
+						...opt,
+						updatedAt: new Date(),
+						updatedBy: dbBotUser.id,
+					},
+					{ where: { id: existingOption.id } }
+				);
+			}
+		} else {
+			await SubCommandOption.create({
+				...opt,
+				id: uuidv4(),
+				subCommandId,
+				subCommandGroupCommandId,
+				createdAt: new Date(),
+				createdBy: dbBotUser.id,
+			});
+		}
+    }))
+};
+
+const processSubCommandGroups = async ({ dbBotUser, subCommandId, groups }) => {
+    const existingGroups = await SubCommandGroup.findAll({ where: { subCommandId } })
+
+    const existingGroupMap = new Map(existingGroups.map(grp => [grp.name, grp]));
+    const incomingGroupNames = new Set(groups.map(grp => grp.name));
+
+    const groupsToDelete = existingGroups.filter(grp => !incomingGroupNames.has(grp.name));
+    if (groupsToDelete.length > 0) {
+        await SubCommandGroup.destroy({
+            where: { id: groupsToDelete.map(grp => grp.id) },
+        });
+    }
+
+    await Promise.all(groups.map(async group => {
+		let dbGroup = existingGroupMap.get(group.name);
+		
+		if (dbGroup) {
+			if (!compareValues(dbGroup, group)) {
+				await SubCommandGroup.update({
+						description: group.description,
+						updatedAt: new Date(),
+						updatedBy: dbBotUser.id,
+					},
+					{ where: { id: dbGroup.id } }
+				);
+			}
+		} else {
+			dbGroup = await SubCommandGroup.create({
+				...group,
+				id: uuidv4(),
+				subCommandId,
+				createdAt: new Date(),
+				createdBy: dbBotUser.id,
+			});
+
+        }
+		
+		await processSubCommandGroupCommands({ dbBotUser, subCommandId, subCommandGroupId: dbGroup.id,  groupCommands: (group.options || []) });
+	}
+	
+	)
+		
+    );
+};
+
+const fieldsToExclude = ['createdAt', 'createdBy', 'updatedAt', 'updatedBy', 'serialId'];
+
+const processSubCommands = async ({ dbBotUser, dbServer, dbCommands, unregisteredCommandChanges }) => {
+    try {
+        const dbCommandsMap = new Map(dbCommands.map(cmd => [cmd.name, cmd]));
+
+        await Promise.all(
+            unregisteredCommandChanges.map(async uC => {
+                uC.serverId = dbServer.id;
+                const existingCommand = dbCommandsMap.get(uC.name);
+                const now = new Date();
+					
+                if (!existingCommand) {
+                    const newDbCommand = await SubCommand.create({
+                        ...uC,
+                        id: uuidv4(),
+                        serverId: dbServer.id,
+                        createdAt: now,
+                        createdBy: dbBotUser.id,
+                    });
+					
+                    await Promise.all(
+                        (uC.options || []).map(async commandOpt => {
+                            if (commandOpt.type === subCommandOptionTypes.SUB_COMMAND_GROUP) {
+                                await processSubCommandGroups({ dbBotUser, subCommandId: newDbCommand.id, groups: [commandOpt]});
+                            } else {
+                                await processSubCommandOptions({dbBotUser, subCommandId: newDbCommand.id, subCommandGroupCommandId: null, options: [commandOpt]});
+                            }
+                        })
+                    );
+                } else {
+                    fieldsToExclude.forEach(f => delete existingCommand[f]);
+
+                    if (!compareValues({ ...existingCommand, id: undefined, serverId: undefined }, { ...uC, options: undefined })) {
+                        await SubCommand.update(
+                            {
+                                ...uC,
+                                updatedAt: now,
+                                updatedBy: dbBotUser.id,
+                            },
+                            {
+                                where: {
+                                    name: existingCommand.name,
+                                    serverId: existingCommand.serverId,
+                                },
+                            }
+                        );
+                    }
+
+                    await Promise.all(
+                        (uC.options || []).map(async commandOpt => {
+                            if (commandOpt.type === subCommandOptionTypes.SUB_COMMAND_GROUP) {
+                                await processSubCommandGroups({ dbBotUser, subCommandId: existingCommand.id, groups: [commandOpt] });
+                            } else {
+                                await processSubCommandOptions({ dbBotUser, subCommandId: existingCommand.id, subCommandGroupCommandId: null, options: ([commandOpt] || []) });
+                            }
+                        })
+                    );
+                }
+            })
+        );
+
+        console.log("Processing complete.");
+    } catch (err) {
+        console.error("Error processing subcommands:", err);
+    }
+};
+
 const registerCommandHandlers = async ({ client, dbServer, dbBotUser }) => {
 	const commandHandlers = {}
 	const commands = new Collection()
@@ -99,8 +298,8 @@ const registerCommandHandlers = async ({ client, dbServer, dbBotUser }) => {
 			options: recursivelyAppendOptions(value.data.options)
 		})
 	))
-	
-	// codedCommands = []
+
+	const dbCommands = await SubCommand.findAll({ where: { serverId: dbServer.id }, raw: true });
 	
 	if (commands.size === 0 || codedCommands.length === 0) {
 		console.log(`No commands received in commands set. Clearing commands...`);
@@ -113,6 +312,17 @@ const registerCommandHandlers = async ({ client, dbServer, dbBotUser }) => {
 			console.error(error);
 		}
 		
+		const dbCommandIds = dbCommands.map(c => c.id)
+		const dbCommandGroups = await SubCommandGroup.findAll({ where: { subCommandId: dbCommandIds }})
+		const dbCommandGroupIds = dbCommandGroups.map(g => g.id)
+
+		
+		await SubCommandOption.destroy({ where: { subCommandId: dbCommandIds }})
+		await SubCommandGroupCommand.destroy({ where: { subCommandGroupId: dbCommandGroupIds }})
+		await SubCommandGroup.destroy({ where: { id: dbCommandGroupIds }})
+		await SubCommand.destroy({ where: { id: dbCommandIds }})
+
+		
 		return
 	}
 	
@@ -124,18 +334,24 @@ const registerCommandHandlers = async ({ client, dbServer, dbBotUser }) => {
 	// convert commands on Discord's API to custom class object
 	existingCommands = existingCommands.map(ec => new SlashCommandData({ ...ec, options: recursivelyAppendOptions(ec.options) }))
 	
+
+	
 	const unregisteredCommandChanges = codedCommands.map(cC => {
 		if (existingCommands.filter(eC => compareValues(eC, cC)).length === 0) return cC
 	}).filter(Boolean)
+	
+	// const dbCommands = await SubCommand.findAll({ where: { serverId: dbServer.id }, raw: true });
 
 	if (unregisteredCommandChanges.length === 0) {
 		console.log(`Application slash command configurations have not changed for ${dbServer.name} (${dbServer.platformId})`);
 		
+		if (unregisteredCommandChanges.length !== codedCommands.length) {
+			await processSubCommands({ dbBotUser, dbServer, dbCommands, unregisteredCommandChanges: codedCommands })
+		}
+
 		return
 	}
 
-	// TODO: Save commands in DB and only execute code below if a change is identified
-	// register the slash commands to the API
 	try {			
 		await client.rest.put(
 			Routes.applicationGuildCommands(DISCORD_BOT_CLIENT_ID, dbServer.platformId),
@@ -145,107 +361,12 @@ const registerCommandHandlers = async ({ client, dbServer, dbBotUser }) => {
 		console.error(err);
 	}
 	
-	try {
-		const dbCommands = await SubCommand.findAll({ where: { serverId: dbServer.id }, raw: true })
-		
-		for (const uC of unregisteredCommandChanges) {
-			const existingCommand = dbCommands.find(c => c.name === uC.name)
-			
-			const now = new Date()
-
-			if (!existingCommand) {
-				const newDbCommand = await SubCommand.create({
-					...uC,
-					id: uuidv4(),
-					serverId: dbServer.id, 
-					createdAt: now,
-					createdBy: dbBotUser.id,
-				})
-				
-				for (const commandOpt of (uC.options || [])) {
-
-					let newSubCommandGroup = null
-					
-					if (commandOpt.type === subCommandOptionTypes.SUB_COMMAND_GROUP) {
-						console.log(555, commandOpt)
-						newSubCommandGroup = await SubCommandGroup.create({
-							...commandOpt,
-							id: uuidv4(),
-							subCommandId: newDbCommand.id,
-							createdAt: now,
-							createdBy: dbBotUser.id,
-						})
-					} 
-					
-					if (!!newSubCommandGroup) {
-						for (const groupCommand of (commandOpt.options || [])) {
-							const newDbGroupCommand = await SubCommandGroupCommand.create({
-								name: groupCommand.name,
-								description: groupCommand.description,
-								id: uuidv4(),
-								subCommandGroupId: newSubCommandGroup.id,
-								createdAt: now,
-								createdBy: dbBotUser.id,
-							})
-							
-							for (const groupCommandOptions of (groupCommand.options || [])) {
-								await SubCommandOption.create({
-									...groupCommandOptions,
-									id: uuidv4(),
-									subCommandId: newDbCommand.id,
-									subCommandGroupCommandId: newDbGroupCommand.id,
-									createdAt: now,
-									createdBy: dbBotUser.id,
-								})
-							}
-
-						}
-						
-					} else {
-						for (const opt of (commandOpt.options || [])) {
-							await SubCommandOption.create({
-								...opt,
-								id: uuidv4(),
-								subCommandId: newDbCommand.id,
-								createdAt: now,
-								createdBy: dbBotUser.id,
-							})
-						}
-					}
-				}
-			} else {
-				const fieldsToExclude = ['createdAt', 'createdBy', 'updatedAt', 'updatedBy', 'serialId',]
-
-				fieldsToExclude.forEach(f => delete existingCommand[f] )
-				if (!compareValues({ ...existingCommand, id: undefined, serverId: undefined, options: undefined }, { ...uC, options: undefined })) {
-					await SubCommand.update({
-						...uC, 
-						updatedAt: now,
-						updatedBy: dbBotUser.id,
-					}, {
-						where: {
-							name: existingCommand.name,
-							serverId: existingCommand.serverId
-						}
-					})
-				}
-
-			}
-		}
-
-		// TODO: Workflows for updating subcommand groups and options
-		// const dbSubGroupCommands = await SubCommandGroup.findAll({ where: { subCommandId: dbCommands.map(c => c.id) }})
-		
-		// const dbCommandOptions = await SubCommandGroup.findAll({ where: { subCommandId: dbCommands.map(c => c.id) }})
-		
-
-	} catch (err) {
-		console.error(err);
-	}
-	
-	console.log(`Successfully reloaded application "/" commands for ${dbServer.name} (${dbServer.platformId})`);
+	await processSubCommands({ dbBotUser, dbServer, dbCommands, unregisteredCommandChanges })
 };
 
 module.exports = {
 	registerCommandHandlers,
 };
+
+
+
