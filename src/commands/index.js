@@ -1,3 +1,4 @@
+// TODO: Modularize `registerCommandHandlers` further and re-organize file
 const { Routes } = require('discord.js');
 const { discordCreds: { DISCORD_BOT_CLIENT_ID } } = require('../config');
 const { constants: { commandTypes } } = require('../utils');
@@ -65,7 +66,9 @@ const processSubCommandGroupCommands = async ({ dbBotUser, subCommandId, subComm
 
     const groupCommandsToDelete = existingGroupCommands.filter(cmd => !incomingGroupCommandNames.has(cmd.name))
     if (groupCommandsToDelete.length > 0) {
-        await SubCommandGroupCommand.destroy({ where: { id: groupCommandsToDelete.map(cmd => cmd.id) } })
+		const groupCommandIds = groupCommandsToDelete.map(cmd => cmd.id)
+		await SubCommandOption.destroy({ where: { subCommandGroupCommandId: groupCommandIds }})
+        await SubCommandGroupCommand.destroy({ where: { id: groupCommandIds } })
     }
 
     await Promise.all(groupCommands.map(async groupCommand => {
@@ -82,7 +85,7 @@ const processSubCommandGroupCommands = async ({ dbBotUser, subCommandId, subComm
 				);
 			}
 		} else {
-			await SubCommandGroupCommand.create({
+			dbGroupCommand = await SubCommandGroupCommand.create({
 				...groupCommand,
 				id: uuidv4(),
 				subCommandGroupId,
